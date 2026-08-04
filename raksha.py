@@ -25,55 +25,42 @@ st.set_page_config(page_title="Raksha — Family Digital Safety Guardian",
                     page_icon="🛡️", layout="wide")
 
 # ---------------------------------------------------------
-# DESIGN LAYER — custom CSS for a polished, judge-ready look
+# DESIGN LAYER — light, trustworthy blue-green theme
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    .stApp { background: linear-gradient(180deg, #0f1419 0%, #1a2332 100%); }
-
     .hero {
-        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #be185d 100%);
+        background: linear-gradient(90deg, #4F9DF7, #6FC3A0);
         padding: 2.2rem 2rem;
         border-radius: 18px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 8px 32px rgba(124, 58, 237, 0.25);
+        box-shadow: 0 6px 20px rgba(79, 157, 247, 0.18);
     }
     .hero h1 {
         color: white; font-size: 2.3rem; margin: 0; font-weight: 800;
         letter-spacing: -0.5px;
     }
     .hero p {
-        color: #e0e7ff; font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0;
+        color: #eaf6f0; font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0;
     }
-
-    .stat-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px;
-        padding: 1rem;
-        text-align: center;
-        margin-bottom: 0.6rem;
-    }
-    .stat-card .num { font-size: 1.6rem; font-weight: 800; color: #a78bfa; }
-    .stat-card .lbl { font-size: 0.8rem; color: #cbd5e1; }
 
     div[data-testid="stTabs"] button {
         font-size: 1.05rem; font-weight: 600; padding: 0.6rem 1.2rem;
     }
 
     .result-box {
-        background: rgba(255,255,255,0.04);
-        border-left: 4px solid #7c3aed;
+        background: #F2F5FA;
+        border-left: 5px solid #1E63D0;
         border-radius: 10px;
         padding: 1.2rem 1.4rem;
         margin-top: 1rem;
-        color: #e5e7eb;
+        color: #1A1A2E;
     }
 
     .footer-tag {
         text-align: center; color: #6b7280; font-size: 0.85rem;
         margin-top: 2.5rem; padding-top: 1rem;
-        border-top: 1px solid rgba(255,255,255,0.08);
+        border-top: 1px solid #e5e7eb;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -184,7 +171,7 @@ with tab2:
 # ---------------------------------------------------------
 with tab3:
     st.subheader("Learn to spot scams")
-    st.caption("Get a fresh, realistic scam example with its red flags explained — great for practice.")
+    st.write("Press the button for a practice example and its red flags.")
 
     topics = ["lottery/prize", "fake delivery/OTP", "bank KYC update",
               "job offer", "fake tech support", "UPI refund scam"]
