@@ -72,13 +72,16 @@ st.markdown("""
 <div class="hero">
     <h1>🛡️ Raksha — Family Digital Safety Guardian</h1>
     <p>Protecting families from online fraud — checks scam messages, inspects suspicious links,
-    and teaches people to spot fraud themselves. Built for real families. Works in Telugu.</p>
+    and teaches people to spot fraud themselves. Built for real families.
+    Works in English, Hindi, Telugu, Tamil, and Kannada.</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # SIDEBAR — mission + stats (great pitch backdrop)
 # ---------------------------------------------------------
+LANGUAGES = ["English", "Hindi", "Telugu", "Tamil", "Kannada"]
+
 with st.sidebar:
     st.markdown("### 🛡️ Our Mission")
     st.write(
@@ -87,8 +90,14 @@ with st.sidebar:
         "in the family's own language."
     )
     st.markdown("---")
+    st.markdown("### 🌐 Choose your language")
+    selected_language = st.selectbox(
+        "Raksha will reply in this language:",
+        LANGUAGES, index=0, key="lang_select"
+    )
+    st.markdown("---")
     st.markdown("**Why Raksha wins**")
-    st.write("✅ Real problem, real mission\n\n✅ 3 working tools, not 1\n\n✅ Telugu support\n\n✅ One clean `ask_ai()` helper reused everywhere")
+    st.write("✅ Real problem, real mission\n\n✅ 3 working tools, not 1\n\n✅ 5 Indian languages supported\n\n✅ One clean `ask_ai()` helper reused everywhere")
     st.markdown("---")
     st.caption("Model: llama-3.3-70b-versatile via Groq")
 
@@ -126,7 +135,8 @@ with tab1:
                 "Risk: Low / Medium / High\n"
                 "Warning signs: the exact red flags you found\n"
                 "What to do: simple advice.\n"
-                "Simple language. If the message is Telugu, reply in Telugu."
+                f"Use very simple, everyday language. Reply entirely in {selected_language}, "
+                "regardless of what language the input message is in."
             )
             with st.spinner("Analyzing message..."):
                 result = ask_ai(system, message)
@@ -159,8 +169,9 @@ with tab2:
                 "Reasons: red flags (fake or lookalike domain, misspelled "
                 "brand, strange characters, urgency).\n"
                 "Advice: what the person should do.\n"
-                "Never tell the user to open the link. Simple language; "
-                "reply in Telugu if the input is Telugu."
+                "Never tell the user to open the link. "
+                f"Use very simple, everyday language. Reply entirely in {selected_language}, "
+                "regardless of what language the input link/text is in."
             )
             with st.spinner("Inspecting link..."):
                 result = ask_ai(system, link)
@@ -181,7 +192,8 @@ with tab3:
         system = (
             "You are Raksha, a friendly teacher. Create ONE realistic "
             "scam message that targets Indian families, then list its "
-            "red flags in simple points. Keep it short and educational."
+            "red flags in simple points. Keep it short and educational. "
+            f"Write the entire example and explanation in {selected_language}."
         )
         with st.spinner("Creating a practice example..."):
             result = ask_ai(system, f"Give one {chosen} scam example with red flags.")
