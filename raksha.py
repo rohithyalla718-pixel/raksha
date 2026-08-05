@@ -9,7 +9,6 @@ import re
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 MODEL = "llama-3.3-70b-versatile"
 
-
 def ask_ai(system_prompt, user_text):
     """The single AI helper every tab reuses. Write once, use everywhere."""
     completion = client.chat.completions.create(
@@ -21,36 +20,47 @@ def ask_ai(system_prompt, user_text):
     )
     return completion.choices[0].message.content
 
-
 st.set_page_config(page_title="Raksha — Family Digital Safety Guardian",
                     page_icon="🛡️", layout="wide")
 
 # ---------------------------------------------------------
-# SESSION STATE — impact counters (Feature 1) + example-fill flags (Feature 3)
+# SESSION STATE — impact counters + example-fill flags
 # ---------------------------------------------------------
-if "messages_checked" not in st.session_state:
-    st.session_state.messages_checked = 0
-if "scams_caught" not in st.session_state:
-    st.session_state.scams_caught = 0
-if "msg" not in st.session_state:
-    st.session_state.msg = ""
-
+for key, default in {
+    "messages_checked": 0,
+    "scams_caught": 0,
+    "suspicious_caught": 0,
+    "links_checked": 0,
+    "dangerous_links": 0,
+    "example_text": "",
+    "last_result": None,
+    "last_link_result": None,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 def parse_verdict(result_text):
     """Pull the Verdict line out of the AI's reply. Returns one of
-    SAFE / SUSPICIOUS / SCAM / DANGEROUS / None."""
+    SAFE / SUSPICIOUS / SCAM / None."""
     match = re.search(r"Verdict:\s*([A-Za-z /]+)", result_text)
     if not match:
+        # Fallback: look for keywords anywhere in the text
+        upper = result_text.upper()
+        if "LIKELY SCAM" in upper or "DANGEROUS" in upper:
+            return "SCAM"
+        if "SUSPICIOUS" in upper:
+            return "SUSPICIOUS"
+        if "SAFE" in upper:
+            return "SAFE"
         return None
-    verdict_raw = match.group(1).upper()
-    if "SCAM" in verdict_raw or "DANGEROUS" in verdict_raw:
+    verdict_raw = match.group(1).upper().strip()
+    if "LIKELY SCAM" in verdict_raw or "SCAM" in verdict_raw or "DANGEROUS" in verdict_raw:
         return "SCAM"
     if "SUSPICIOUS" in verdict_raw:
         return "SUSPICIOUS"
     if "SAFE" in verdict_raw:
         return "SAFE"
     return None
-
 
 def parse_confidence(result_text):
     """Pull a 'Confidence: 90%' style line out of the AI's reply."""
@@ -59,28 +69,57 @@ def parse_confidence(result_text):
         return min(int(match.group(1)), 100)
     return None
 
-
 def render_verdict(result_text):
-    """Feature 2: color-coded verdict box, red/yellow/green.
-    Falls back to the neutral box if no verdict line is found."""
+    """Color-coded verdict box: red / yellow / green.
+    Plus confidence indicator with colored progress bar."""
     verdict = parse_verdict(result_text)
-    if verdict == "SCAM":
-        st.error(result_text)
-    elif verdict == "SUSPICIOUS":
-        st.warning(result_text)
-    elif verdict == "SAFE":
-        st.success(result_text)
-    else:
-        st.markdown(f'<div class="result-box">{result_text}</div>', unsafe_allow_html=True)
 
-    # Feature 4: confidence indicator
+    # — Color-coded verdict boxes —
+    if verdict == "SCAM":
+        st.error("🚨 **LIKELY SCAM DETECTED**")
+        st.markdown(
+            f"""<div style="background:#FEE2E2; border-left:5px solid #DC2626;
+            border-radius:10px; padding:1.2rem 1.4rem; margin-top:0.5rem;
+            color:#991B1B; font-size:1rem;">{result_text}</div>""",
+            unsafe_allow_html=True,
+        )
+    elif verdict == "SUSPICIOUS":
+        st.warning("⚠️ **SUSPICIOUS — Be Careful**")
+        st.markdown(
+            f"""<div style="background:#FEF3C7; border-left:5px solid #D97706;
+            border-radius:10px; padding:1.2rem 1.4rem; margin-top:0.5rem;
+            color:#92400E; font-size:1rem;">{result_text}</div>""",
+            unsafe_allow_html=True,
+        )
+    elif verdict == "SAFE":
+        st.success("✅ **SAFE — Looks Legitimate**")
+        st.markdown(
+            f"""<div style="background:#D1FAE5; border-left:5px solid #059669;
+            border-radius:10px; padding:1.2rem 1.4rem; margin-top:0.5rem;
+            color:#065F46; font-size:1rem;">{result_text}</div>""",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f'<div class="result-box">{result_text}</div>',
+            unsafe_allow_html=True,
+        )
+
+    # — Confidence indicator —
     confidence = parse_confidence(result_text)
     if confidence is not None:
-        st.caption(f"How sure am I: {confidence}%")
+        conf_color = "#DC2626" if confidence >= 75 else "#D97706" if confidence >= 40 else "#059669"
+        st.markdown(
+            f"""<div style="margin-top:1rem; padding:0.6rem 1rem;
+            background:#F8FAFC; border-radius:8px; border:1px solid #E2E8F0;">
+            <span style="font-weight:700; font-size:1rem;">🎯 Confidence Level:
+            <span style="color:{conf_color}; font-size:1.2rem;">{confidence}%</span></span>
+            </div>""",
+            unsafe_allow_html=True,
+        )
         st.progress(confidence / 100)
 
     return verdict
-
 
 # ---------------------------------------------------------
 # TRANSLATIONS — every UI string, per language
@@ -106,11 +145,12 @@ TEXT = {
         "t1_button": "🔍 Check Message",
         "t1_warning": "Please paste a message first.",
         "t1_spinner": "Analyzing message...",
-        "t1_examples_label": "🚀 Try an example:",
+        "t1_examples_label": "🚀 Try an example (one click demo!):",
         "t1_ex_lottery": "🎰 Fake Lottery",
         "t1_ex_bank": "🏦 Fake Bank Alert",
         "t1_ex_delivery": "📦 Fake Delivery",
-        "t1_tally": "🛡️ {checked} messages checked, {caught} scams caught",
+        "t1_tally": "🛡️ {checked} messages checked, {caught} scams caught, {suspicious} suspicious flagged",
+        "t1_links_tally": "🔗 {links} links inspected, {dangerous} dangerous found",
         "t2_subheader": "Is this link safe to open?",
         "t2_caption": "Paste any suspicious link or website address — we won't open it, just inspect it.",
         "t2_placeholder": "e.g. http://sbi-secure-login.xyz/verify-account",
@@ -148,7 +188,8 @@ TEXT = {
         "t1_ex_lottery": "🎰 फर्जी लॉटरी",
         "t1_ex_bank": "🏦 फर्जी बैंक अलर्ट",
         "t1_ex_delivery": "📦 फर्जी डिलीवरी",
-        "t1_tally": "🛡️ {checked} संदेश जांचे गए, {caught} धोखाधड़ी पकड़ी गई",
+        "t1_tally": "🛡️ {checked} संदेश जांचे गए, {caught} धोखाधड़ी पकड़ी गई, {suspicious} संदिग्ध चिह्नित",
+        "t1_links_tally": "🔗 {links} लिंक जांचे गए, {dangerous} खतरनाक पाए गए",
         "t2_subheader": "क्या यह लिंक खोलना सुरक्षित है?",
         "t2_caption": "कोई भी संदिग्ध लिंक या वेबसाइट पता पेस्ट करें — हम उसे नहीं खोलेंगे, सिर्फ जांचेंगे।",
         "t2_placeholder": "जैसे: http://sbi-secure-login.xyz/verify-account",
@@ -164,9 +205,9 @@ TEXT = {
     },
     "Telugu": {
         "hero_title": "🛡️ రక్ష — కుటుంబ డిజిటల్ భద్రతా రక్షకుడు",
-        "hero_sub": "ఆన్‌లైన్ మోసాల నుండి కుటుంబాలను రక్షిస్తుంది — అనుమానాస్పద సందేశాలను తనిఖీ చేస్తుంది, లింక్‌లను పరిశీలిస్తుంది, మోసాన్ని గుర్తించడం నేర్పిస్తుంది. నిజమైన కుటుంబాల కోసం రూపొందించబడింది. ఆంగ్లం, హిందీ, తెలుగు, తమిళం, కన్నడలో అందుబాటులో ఉంది.",
+        "hero_sub": "ఆన్లైన్ మోసాల నుండి కుటుంబాలను రక్షిస్తుంది — అనుమానాస్పద సందేశాలను తనిఖీ చేస్తుంది, లింక్లను పరిశీలిస్తుంది, మోసాన్ని గుర్తించడం నేర్పిస్తుంది. నిజమైన కుటుంబాల కోసం రూపొందించబడింది. ఆంగ్లం, హిందీ, తెలుగు, తమిళం, కన్నడలో అందుబాటులో ఉంది.",
         "mission_title": "🛡️ మా లక్ష్యం",
-        "mission_text": "ప్రతిరోజూ వేలాది భారతీయ కుటుంబాలు ఆన్‌లైన్ మోసాలలో డబ్బు కోల్పోతున్నాయి. వృద్ధులు అత్యధికంగా లక్ష్యంగా ఉంటారు. రక్ష రక్షిస్తుంది, పరిశీలిస్తుంది, కుటుంబం సొంత భాషలో నేర్పిస్తుంది.",
+        "mission_text": "ప్రతిరోజూ వేలాది భారతీయ కుటుంబాలు ఆన్లైన్ మోసాలలో డబ్బు కోల్పోతున్నాయి. వృద్ధులు అత్యధికంగా లక్ష్యంగా ఉంటారు. రక్ష రక్షిస్తుంది, పరిశీలిస్తుంది, కుటుంబం సొంత భాషలో నేర్పిస్తుంది.",
         "lang_label": "🌐 మీ భాషను ఎంచుకోండి",
         "lang_caption": "రక్ష ఈ భాషలో సమాధానం ఇస్తుంది:",
         "why_title": "రక్ష ఎందుకు గెలుస్తుంది",
@@ -176,7 +217,7 @@ TEXT = {
         "tab2": "🔗 లింక్ పరిశీలన",
         "tab3": "🎓 నేర్చుకోండి & క్విజ్",
         "t1_subheader": "ఈ సందేశం మోసమా?",
-        "t1_caption": "మీకు అనుమానం ఉన్న ఏదైనా SMS, WhatsApp, లేదా ఇమెయిల్‌ను పేస్ట్ చేయండి.",
+        "t1_caption": "మీకు అనుమానం ఉన్న ఏదైనా SMS, WhatsApp, లేదా ఇమెయిల్ను పేస్ట్ చేయండి.",
         "t1_placeholder": "ఉదా: అభినందనలు! మీరు KBC లాటరీలో రూ. 10,00,000 గెలుచుకున్నారు. క్లెయిమ్ చేయడానికి రూ. 5000 ఫీజు పంపండి...",
         "t1_label": "అనుమానాస్పద సందేశం:",
         "t1_button": "🔍 సందేశాన్ని తనిఖీ చేయండి",
@@ -186,19 +227,20 @@ TEXT = {
         "t1_ex_lottery": "🎰 నకిలీ లాటరీ",
         "t1_ex_bank": "🏦 నకిలీ బ్యాంక్ అలర్ట్",
         "t1_ex_delivery": "📦 నకిలీ డెలివరీ",
-        "t1_tally": "🛡️ {checked} సందేశాలు తనిఖీ చేయబడ్డాయి, {caught} మోసాలు పట్టుబడ్డాయి",
+        "t1_tally": "🛡️ {checked} సందేశాలు తనిఖీ చేయబడ్డాయి, {caught} మోసాలు పట్టుబడ్డాయి, {suspicious} అనుమానాస్పదం",
+        "t1_links_tally": "🔗 {links} లింక్లు పరిశీలించబడ్డాయి, {dangerous} ప్రమాదకరం కనుగొనబడ్డాయి",
         "t2_subheader": "ఈ లింక్ తెరవడం సురక్షితమేనా?",
-        "t2_caption": "ఏదైనా అనుమానాస్పద లింక్ లేదా వెబ్‌సైట్ చిరునామాను పేస్ట్ చేయండి — మేము దానిని తెరవం, కేవలం పరిశీలిస్తాము.",
+        "t2_caption": "ఏదైనా అనుమానాస్పద లింక్ లేదా వెబ్సైట్ చిరునామాను పేస్ట్ చేయండి — మేము దానిని తెరవం, కేవలం పరిశీలిస్తాము.",
         "t2_placeholder": "ఉదా: http://sbi-secure-login.xyz/verify-account",
         "t2_label": "అనుమానాస్పద లింక్:",
-        "t2_button": "🔍 లింక్‌ను పరిశీలించండి",
-        "t2_warning": "దయచేసి ముందుగా ఒక లింక్‌ను పేస్ట్ చేయండి.",
-        "t2_spinner": "లింక్‌ను పరిశీలిస్తోంది...",
+        "t2_button": "🔍 లింక్ను పరిశీలించండి",
+        "t2_warning": "దయచేసి ముందుగా ఒక లింక్ను పేస్ట్ చేయండి.",
+        "t2_spinner": "లింక్ను పరిశీలిస్తోంది...",
         "t3_subheader": "మోసాన్ని గుర్తించడం నేర్చుకోండి",
         "t3_caption": "ప్రాక్టీస్ ఉదాహరణ మరియు దాని హెచ్చరిక సంకేతాల కోసం బటన్ నొక్కండి.",
         "t3_button": "🎓 నాకు ఒక మోస ఉదాహరణ ఇవ్వండి",
         "t3_spinner": "ప్రాక్టీస్ ఉదాహరణను సృష్టిస్తోంది...",
-        "footer": "🛡️ రక్ష — రక్షిస్తుంది. పరిశీలిస్తుంది. నేర్పిస్తుంది. మూడు సాధనాలలో ఒకే ask_ai() హెల్పర్‌తో నిర్మించబడింది.",
+        "footer": "🛡️ రక్ష — రక్షిస్తుంది. పరిశీలిస్తుంది. నేర్పిస్తుంది. మూడు సాధనాలలో ఒకే ask_ai() హెల్పర్తో నిర్మించబడింది.",
     },
     "Tamil": {
         "hero_title": "🛡️ ரக்ஷா — குடும்ப டிஜிட்டல் பாதுகாவலர்",
@@ -224,7 +266,8 @@ TEXT = {
         "t1_ex_lottery": "🎰 போலி லாட்டரி",
         "t1_ex_bank": "🏦 போலி வங்கி எச்சரிக்கை",
         "t1_ex_delivery": "📦 போலி டெலிவரி",
-        "t1_tally": "🛡️ {checked} செய்திகள் சரிபார்க்கப்பட்டன, {caught} மோசடிகள் பிடிக்கப்பட்டன",
+        "t1_tally": "🛡️ {checked} செய்திகள் சரிபார்க்கப்பட்டன, {caught} மோசடிகள் பிடிக்கப்பட்டன, {suspicious} சந்தேகமானவை",
+        "t1_links_tally": "🔗 {links} இணைப்புகள் ஆய்வு செய்யப்பட்டன, {dangerous} ஆபத்தானவை கண்டறியப்பட்டன",
         "t2_subheader": "இந்த இணைப்பைத் திறப்பது பாதுகாப்பானதா?",
         "t2_caption": "சந்தேகத்திற்குரிய இணைப்பு அல்லது இணையதள முகவரியை ஒட்டவும் — நாங்கள் அதைத் திறக்க மாட்டோம், ஆய்வு மட்டுமே செய்வோம்.",
         "t2_placeholder": "எ.கா: http://sbi-secure-login.xyz/verify-account",
@@ -240,9 +283,9 @@ TEXT = {
     },
     "Kannada": {
         "hero_title": "🛡️ ರಕ್ಷಾ — ಕುಟುಂಬ ಡಿಜಿಟಲ್ ಸುರಕ್ಷತಾ ರಕ್ಷಕ",
-        "hero_sub": "ಆನ್‌ಲೈನ್ ವಂಚನೆಯಿಂದ ಕುಟುಂಬಗಳನ್ನು ರಕ್ಷಿಸುತ್ತದೆ — ಸಂಶಯಾಸ್ಪದ ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ಲಿಂಕ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ವಂಚನೆಯನ್ನು ಗುರುತಿಸಲು ಕಲಿಸುತ್ತದೆ. ನಿಜವಾದ ಕುಟುಂಬಗಳಿಗಾಗಿ ನಿರ್ಮಿಸಲಾಗಿದೆ. ಇಂಗ್ಲಿಷ್, ಹಿಂದಿ, ತೆಲುಗು, ತಮಿಳು, ಕನ್ನಡದಲ್ಲಿ ಲಭ್ಯವಿದೆ.",
+        "hero_sub": "ಆನ್ಲೈನ್ ವಂಚನೆಯಿಂದ ಕುಟುಂಬಗಳನ್ನು ರಕ್ಷಿಸುತ್ತದೆ — ಸಂಶಯಾಸ್ಪದ ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ಲಿಂಕ್ಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ವಂಚನೆಯನ್ನು ಗುರುತಿಸಲು ಕಲಿಸುತ್ತದೆ. ನಿಜವಾದ ಕುಟುಂಬಗಳಿಗಾಗಿ ನಿರ್ಮಿಸಲಾಗಿದೆ. ಇಂಗ್ಲಿಷ್, ಹಿಂದಿ, ತೆಲುಗು, ತಮಿಳು, ಕನ್ನಡದಲ್ಲಿ ಲಭ್ಯವಿದೆ.",
         "mission_title": "🛡️ ನಮ್ಮ ಧ್ಯೇಯ",
-        "mission_text": "ಪ್ರತಿದಿನ ಸಾವಿರಾರು ಭಾರತೀಯ ಕುಟುಂಬಗಳು ಆನ್‌ಲೈನ್ ವಂಚನೆಯಲ್ಲಿ ಹಣ ಕಳೆದುಕೊಳ್ಳುತ್ತವೆ. ಹಿರಿಯರೇ ಅತಿ ದೊಡ್ಡ ಗುರಿ. ರಕ್ಷಾ ರಕ್ಷಿಸುತ್ತದೆ, ಪರಿಶೀಲಿಸುತ್ತದೆ, ಕುಟುಂಬದ ಸ್ವಂತ ಭಾಷೆಯಲ್ಲಿ ಕಲಿಸುತ್ತದೆ.",
+        "mission_text": "ಪ್ರತಿದಿನ ಸಾವಿರಾರು ಭಾರತೀಯ ಕುಟುಂಬಗಳು ಆನ್ಲೈನ್ ವಂಚನೆಯಲ್ಲಿ ಹಣ ಕಳೆದುಕೊಳ್ಳುತ್ತವೆ. ಹಿರಿಯರೇ ಅತಿ ದೊಡ್ಡ ಗುರಿ. ರಕ್ಷಾ ರಕ್ಷಿಸುತ್ತದೆ, ಪರಿಶೀಲಿಸುತ್ತದೆ, ಕುಟುಂಬದ ಸ್ವಂತ ಭಾಷೆಯಲ್ಲಿ ಕಲಿಸುತ್ತದೆ.",
         "lang_label": "🌐 ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆರಿಸಿ",
         "lang_caption": "ರಕ್ಷಾ ಈ ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರಿಸುತ್ತದೆ:",
         "why_title": "ರಕ್ಷಾ ಏಕೆ ಗೆಲ್ಲುತ್ತದೆ",
@@ -262,9 +305,10 @@ TEXT = {
         "t1_ex_lottery": "🎰 ನಕಲಿ ಲಾಟರಿ",
         "t1_ex_bank": "🏦 ನಕಲಿ ಬ್ಯಾಂಕ್ ಎಚ್ಚರಿಕೆ",
         "t1_ex_delivery": "📦 ನಕಲಿ ಡೆಲಿವರಿ",
-        "t1_tally": "🛡️ {checked} ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿದೆ, {caught} ವಂಚನೆಗಳು ಪತ್ತೆಯಾಗಿವೆ",
+        "t1_tally": "🛡️ {checked} ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿದೆ, {caught} ವಂಚನೆಗಳು ಪತ್ತೆಯಾಗಿವೆ, {suspicious} ಸಂಶಯಾಸ್ಪದ",
+        "t1_links_tally": "🔗 {links} ಲಿಂಕ್ಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿದೆ, {dangerous} ಅಪಾಯಕಾರಿ ಕಂಡುಬಂದಿವೆ",
         "t2_subheader": "ಈ ಲಿಂಕ್ ತೆರೆಯಲು ಸುರಕ್ಷಿತವೇ?",
-        "t2_caption": "ಯಾವುದೇ ಸಂಶಯಾಸ್ಪದ ಲಿಂಕ್ ಅಥವಾ ವೆಬ್‌ಸೈಟ್ ವಿಳಾಸವನ್ನು ಅಂಟಿಸಿ — ನಾವು ಅದನ್ನು ತೆರೆಯುವುದಿಲ್ಲ, ಕೇವಲ ಪರಿಶೀಲಿಸುತ್ತೇವೆ.",
+        "t2_caption": "ಯಾವುದೇ ಸಂಶಯಾಸ್ಪದ ಲಿಂಕ್ ಅಥವಾ ವೆಬ್ಸೈಟ್ ವಿಳಾಸವನ್ನು ಅಂಟಿಸಿ — ನಾವು ಅದನ್ನು ತೆರೆಯುವುದಿಲ್ಲ, ಕೇವಲ ಪರಿಶೀಲಿಸುತ್ತೇವೆ.",
         "t2_placeholder": "ಉದಾ: http://sbi-secure-login.xyz/verify-account",
         "t2_label": "ಸಂಶಯಾಸ್ಪದ ಲಿಂಕ್:",
         "t2_button": "🔍 ಲಿಂಕ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ",
@@ -281,8 +325,7 @@ TEXT = {
 LANGUAGES = ["English", "Hindi", "Telugu", "Tamil", "Kannada"]
 
 # ---------------------------------------------------------
-# Feature 3: pre-loaded sample scams (English text; the AI is told to
-# translate/explain in the selected language regardless of input language)
+# Feature 3: pre-loaded sample scams
 # ---------------------------------------------------------
 EXAMPLES = {
     "lottery": "Congratulations! Your mobile number has won Rs 25,00,000 in the KBC Lucky Draw 2026. To claim your prize, pay a processing fee of Rs 4,999 via UPI to unlock ID KBC2026 within 24 hours or the prize will be cancelled.",
@@ -291,7 +334,7 @@ EXAMPLES = {
 }
 
 # ---------------------------------------------------------
-# Language must be picked BEFORE we render anything else
+# Language picker FIRST
 # ---------------------------------------------------------
 with st.sidebar:
     lang_label_default = "🌐 Choose your language"
@@ -301,26 +344,43 @@ with st.sidebar:
     L = TEXT[selected_language]
 
 # ---------------------------------------------------------
-# DESIGN LAYER — light, trustworthy blue-green theme
+# DESIGN LAYER
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 .hero {
-    background: linear-gradient(90deg, #4F9DF7, #6FC3A0);
-    padding: 2.2rem 2rem;
+    background: linear-gradient(135deg, #1E3A5F 0%, #2D6A4F 50%, #40916C 100%);
+    padding: 2.5rem 2rem;
     border-radius: 18px;
     margin-bottom: 1.5rem;
-    box-shadow: 0 6px 20px rgba(79, 157, 247, 0.18);
+    box-shadow: 0 8px 32px rgba(30, 58, 95, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
 }
 .hero h1 {
     color: white; font-size: 2.3rem; margin: 0; font-weight: 800;
     letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 .hero p {
-    color: #eaf6f0; font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0;
+    color: #D8F3DC; font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0;
 }
 div[data-testid="stTabs"] button {
     font-size: 1.05rem; font-weight: 600; padding: 0.6rem 1.2rem;
+}
+div[data-testid="stTabs"] button[aria-selected="true"] {
+    border-bottom: 3px solid #2D6A4F;
+    color: #1E3A5F;
 }
 .result-box {
     background: #F2F5FA;
@@ -331,18 +391,46 @@ div[data-testid="stTabs"] button {
     color: #1A1A2E;
 }
 .tally-box {
-    background: #EAF6F0;
-    border: 1px solid #6FC3A0;
-    border-radius: 10px;
-    padding: 0.7rem 1rem;
+    background: linear-gradient(135deg, #D8F3DC, #B7E4C7);
+    border: 1px solid #40916C;
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
     margin-bottom: 1rem;
     font-weight: 600;
-    color: #1A1A2E;
+    color: #1B4332;
+    box-shadow: 0 2px 8px rgba(45, 106, 79, 0.15);
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #E2E8F0;
+}
+.stat-card .number {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #1E3A5F;
+}
+.stat-card .label {
+    font-size: 0.8rem;
+    color: #64748B;
+    margin-top: 0.2rem;
 }
 .footer-tag {
     text-align: center; color: #6b7280; font-size: 0.85rem;
     margin-top: 2.5rem; padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
+}
+.example-btn {
+    margin-bottom: 0.5rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -358,7 +446,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# SIDEBAR — rest of the sidebar content (below language picker)
+# SIDEBAR
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown(f"### {L['mission_title']}")
@@ -369,9 +457,28 @@ with st.sidebar:
     st.markdown("---")
     st.caption(L["model_caption"])
     st.markdown("---")
-    # Feature 1: impact tally, always visible in the sidebar too
+
+    # Feature 1: impact dashboard in sidebar
+    st.markdown("### 📊 Impact Dashboard")
     st.markdown(
-        f'<div class="tally-box">{L["t1_tally"].format(checked=st.session_state.messages_checked, caught=st.session_state.scams_caught)}</div>',
+        f"""<div class="stats-grid">
+            <div class="stat-card">
+                <div class="number">{st.session_state.messages_checked}</div>
+                <div class="label">Messages Checked</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" style="color:#DC2626;">{st.session_state.scams_caught}</div>
+                <div class="label">Scams Caught</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" style="color:#D97706;">{st.session_state.suspicious_caught}</div>
+                <div class="label">Suspicious</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" style="color:#2D6A4F;">{st.session_state.links_checked}</div>
+                <div class="label">Links Inspected</div>
+            </div>
+        </div>""",
         unsafe_allow_html=True,
     )
 
@@ -381,54 +488,59 @@ with st.sidebar:
 tab1, tab2, tab3 = st.tabs([L["tab1"], L["tab2"], L["tab3"]])
 
 # ---------------------------------------------------------
-# PART B — Tab 1: Message Checker
+# Tab 1: Message Checker
 # ---------------------------------------------------------
 with tab1:
     st.subheader(L["t1_subheader"])
     st.caption(L["t1_caption"])
 
-    # Feature 1: tally banner at the top of the tab (the judge-facing number)
-    st.markdown(
-        f'<div class="tally-box">{L["t1_tally"].format(checked=st.session_state.messages_checked, caught=st.session_state.scams_caught)}</div>',
-        unsafe_allow_html=True,
-    )
+    # Feature 1: tally banner
+    total_threats = st.session_state.scams_caught + st.session_state.suspicious_caught
+    if st.session_state.messages_checked > 0:
+        st.markdown(
+            f'<div class="tally-box">{L["t1_tally"].format(checked=st.session_state.messages_checked, caught=st.session_state.scams_caught, suspicious=st.session_state.suspicious_caught)}</div>',
+            unsafe_allow_html=True,
+        )
 
     # Feature 3: "Try an example" buttons
     st.markdown(f"**{L['t1_examples_label']}**")
     ex_col1, ex_col2, ex_col3 = st.columns(3)
     with ex_col1:
-        if st.button(L["t1_ex_lottery"], use_container_width=True):
-            st.session_state.msg = EXAMPLES["lottery"]
-            st.rerun()
+        if st.button(L["t1_ex_lottery"], use_container_width=True, key="ex_lottery"):
+            st.session_state.example_text = EXAMPLES["lottery"]
     with ex_col2:
-        if st.button(L["t1_ex_bank"], use_container_width=True):
-            st.session_state.msg = EXAMPLES["bank"]
-            st.rerun()
+        if st.button(L["t1_ex_bank"], use_container_width=True, key="ex_bank"):
+            st.session_state.example_text = EXAMPLES["bank"]
     with ex_col3:
-        if st.button(L["t1_ex_delivery"], use_container_width=True):
-            st.session_state.msg = EXAMPLES["delivery"]
-            st.rerun()
+        if st.button(L["t1_ex_delivery"], use_container_width=True, key="ex_delivery"):
+            st.session_state.example_text = EXAMPLES["delivery"]
+
+    # Use example text if set, otherwise empty
+    default_msg = st.session_state.get("example_text", "")
 
     message = st.text_area(
-        L["t1_label"], height=160, key="msg",
-        placeholder=L["t1_placeholder"]
+        L["t1_label"], height=160, key="msg_input",
+        placeholder=L["t1_placeholder"],
+        value=default_msg,
     )
 
     col1, col2 = st.columns([1, 4])
     with col1:
-        check_clicked = st.button(L["t1_button"], use_container_width=True)
+        check_clicked = st.button(L["t1_button"], use_container_width=True, type="primary")
 
     if check_clicked:
         if not message.strip():
             st.warning(L["t1_warning"])
         else:
             system = (
-                "You are Raksha, a scam-detection guardian. Reply as:\n"
+                "You are Raksha, a scam-detection guardian for Indian families. "
+                "Analyze the message and reply EXACTLY in this format:\n\n"
                 "Verdict: SAFE / SUSPICIOUS / LIKELY SCAM\n"
                 "Risk: Low / Medium / High\n"
-                "Confidence: a percentage from 0 to 100 showing how sure you are\n"
-                "Warning signs: the exact red flags you found\n"
-                "What to do: simple advice.\n"
+                "Confidence: <number>%\n"
+                "Warning signs: <list the exact red flags you found>\n"
+                "What to do: <simple advice>\n\n"
+                "IMPORTANT: Always include the Confidence line with a percentage. "
                 f"Use very simple, everyday language. Reply entirely in {selected_language}, "
                 "regardless of what language the input message is in."
             )
@@ -437,38 +549,52 @@ with tab1:
 
             verdict = render_verdict(result)
 
-            # Feature 1: update the impact tally
+            # Feature 1: update impact tally
             st.session_state.messages_checked += 1
             if verdict == "SCAM":
                 st.session_state.scams_caught += 1
+            elif verdict == "SUSPICIOUS":
+                st.session_state.suspicious_caught += 1
+
+            # Clear example text after checking
+            st.session_state.example_text = ""
 
 # ---------------------------------------------------------
-# PART C — Tab 2: Link Inspector
+# Tab 2: Link Inspector
 # ---------------------------------------------------------
 with tab2:
     st.subheader(L["t2_subheader"])
     st.caption(L["t2_caption"])
 
+    # Show link tally if any links checked
+    if st.session_state.links_checked > 0:
+        st.markdown(
+            f'<div class="tally-box">{L.get("t1_links_tally", "🔗 {links} links inspected, {dangerous} dangerous found").format(links=st.session_state.links_checked, dangerous=st.session_state.dangerous_links)}</div>',
+            unsafe_allow_html=True,
+        )
+
     link = st.text_area(
-        L["t2_label"], height=100, key="link",
+        L["t2_label"], height=100, key="link_input",
         placeholder=L["t2_placeholder"]
     )
 
     col1, col2 = st.columns([1, 4])
     with col1:
-        inspect_clicked = st.button(L["t2_button"], use_container_width=True)
+        inspect_clicked = st.button(L["t2_button"], use_container_width=True, type="primary")
 
     if inspect_clicked:
         if not link.strip():
             st.warning(L["t2_warning"])
         else:
             system = (
-                "You are Raksha, a link-safety guardian. Reply as:\n"
+                "You are Raksha, a link-safety guardian for Indian families. "
+                "Analyze the link and reply EXACTLY in this format:\n\n"
                 "Verdict: SAFE / SUSPICIOUS / DANGEROUS\n"
-                "Confidence: a percentage from 0 to 100 showing how sure you are\n"
-                "Reasons: red flags (fake or lookalike domain, misspelled "
-                "brand, strange characters, urgency).\n"
-                "Advice: what the person should do.\n"
+                "Confidence: <number>%\n"
+                "Reasons: <red flags like fake/lookalike domain, misspelled "
+                "brand, strange characters, urgency>\n"
+                "Advice: <what the person should do>\n\n"
+                "IMPORTANT: Always include the Confidence line with a percentage. "
                 "Never tell the user to open the link. "
                 f"Use very simple, everyday language. Reply entirely in {selected_language}, "
                 "regardless of what language the input link/text is in."
@@ -476,10 +602,15 @@ with tab2:
             with st.spinner(L["t2_spinner"]):
                 result = ask_ai(system, link)
 
-            render_verdict(result)
+            verdict = render_verdict(result)
+
+            # Update link tally
+            st.session_state.links_checked += 1
+            if verdict == "SCAM":
+                st.session_state.dangerous_links += 1
 
 # ---------------------------------------------------------
-# PART D — Tab 3: Learn & Quiz
+# Tab 3: Learn & Quiz
 # ---------------------------------------------------------
 with tab3:
     st.subheader(L["t3_subheader"])
@@ -488,7 +619,7 @@ with tab3:
     topics = ["lottery/prize", "fake delivery/OTP", "bank KYC update",
               "job offer", "fake tech support", "UPI refund scam"]
 
-    if st.button(L["t3_button"], use_container_width=False):
+    if st.button(L["t3_button"], use_container_width=False, type="primary"):
         chosen = random.choice(topics)
         system = (
             "You are Raksha, a friendly teacher. Create ONE realistic "
