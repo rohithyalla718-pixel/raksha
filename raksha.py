@@ -1,180 +1,202 @@
+import streamlit as st
+from groq import Groq
+import random
+import re
+
+# ---------------------------------------------------------
+# PART A — Setup + the ONE reusable AI helper (your core idea)
+# ---------------------------------------------------------
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+MODEL = "llama-3.3-70b-versatile"
+
+
+def ask_ai(system_prompt, user_text):
+    """The single AI helper every tab reuses. Write once, use everywhere."""
+    completion = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_text},
+        ],
+    )
+    return completion.choices[0].message.content
+
+
+st.set_page_config(page_title="Raksha — Family Digital Safety Guardian",
+                    page_icon="🛡️", layout="wide")
+
+# ---------------------------------------------------------
+# SESSION STATE — impact counters (Feature 1) + example-fill flags (Feature 3)
+# ---------------------------------------------------------
+if "messages_checked" not in st.session_state:
+    st.session_state.messages_checked = 0
+if "scams_caught" not in st.session_state:
+    st.session_state.scams_caught = 0
+if "msg" not in st.session_state:
+    st.session_state.msg = ""
+
+# ✅ ADD – Call‑checker counters
+if "calls_checked" not in st.session_state:
+    st.session_state.calls_checked = 0
+if "calls_scams_caught" not in st.session_state:
+    st.session_state.calls_scams_caught = 0
+if "call_text" not in st.session_state:          # holds the example‑filled text
+    st.session_state.call_text = ""
+
+
+def parse_verdict(result_text):
+    """Pull the Verdict line out of the AI's reply. Returns one of
+    SAFE / SUSPICIOUS / SCAM / DANGEROUS / None."""
+    match = re.search(r"Verdict:\s*([A-Za-z /]+)", result_text)
+    if not match:
+        return None
+    verdict_raw = match.group(1).upper()
+    if "SCAM" in verdict_raw or "DANGEROUS" in verdict_raw:
+        return "SCAM"
+    if "SUSPICIOUS" in verdict_raw:
+        return "SUSPICIOUS"
+    if "SAFE" in verdict_raw:
+        return "SAFE"
+    return None
+
+
+def parse_confidence(result_text):
+    """Pull a 'Confidence: 90%' style line out of the AI's reply."""
+    match = re.search(r"Confidence:\s*(\d{1,3})\s*%", result_text)
+    if match:
+        return min(int(match.group(1)), 100)
+    return None
+
+
+def render_verdict(result_text):
+    """Feature 2: colour‑coded verdict box, red/yellow/green.
+    Falls back to the neutral box if no verdict line is found."""
+    verdict = parse_verdict(result_text)
+    if verdict == "SCAM":
+        st.error(result_text)
+    elif verdict == "SUSPICIOUS":
+        st.warning(result_text)
+    elif verdict == "SAFE":
+        st.success(result_text)
+    else:
+        st.markdown(f'<div class="result-box">{result_text}</div>', unsafe_allow_html=True)
+
+    # Feature 4: confidence indicator
+    confidence = parse_confidence(result_text)
+    if confidence is not None:
+        st.caption(f"How sure am I: {confidence}%")
+        st.progress(confidence / 100)
+
+    return verdict
+
+
+# ---------------------------------------------------------
+# TRANSLATIONS — every UI string, per language
+# ---------------------------------------------------------
 TEXT = {
     "English": {
-        # ──────────────────────────────────────────────────────
-        #  Existing keys …
-        # ──────────────────────────────────────────────────────
-        "why_bullets": (
-            "✅ Real problem, real mission\n\n"
-            "✅ 3 working tools, not 1\n\n"
-            "✅ 5 Indian languages supported\n\n"
-            "✅ One clean ask_ai() helper reused everywhere\n"
-            "✅ **New:** Call‑Checker – paste a call transcript and get instant safety advice"
-        ),
-        # ──────────────────────────────────────────────────────
-        #  New UI strings for the Call‑Checker tab
-        # ──────────────────────────────────────────────────────
+        "hero_title": "🛡️ Raksha — Family Digital Safety Guardian",
+        "hero_sub": "Protecting families from online fraud — checks scam messages, inspects suspicious links, and teaches people to spot fraud themselves. Built for real families. Works in English, Hindi, Telugu, Tamil, and Kannada.",
+        "mission_title": "🛡️ Our Mission",
+        "mission_text": "Thousands of Indian families lose money to online scams every day. Elders are the biggest targets. Raksha protects, inspects, and teaches — in the family's own language.",
+        "lang_label": "🌐 Choose your language",
+        "lang_caption": "Raksha will reply in this language:",
+        "why_title": "Why Raksha wins",
+        "why_bullets": "✅ Real problem, real mission\n\n✅ 3 working tools, not 1\n\n✅ 5 Indian languages supported\n\n✅ One clean ask_ai() helper reused everywhere",
+        "model_caption": "Model: llama-3.3-70b-versatile via Groq",
+        "tab1": "📩 Message Checker",
+        "tab2": "🔗 Link Inspector",
+        "tab3": "🎓 Learn & Quiz",
         "tab4": "📞 Call Checker",
-        "t4_subheader": "Did someone just try to scam you over the phone?",
-        "t4_caption": "Paste the text of a phone‑call conversation (or a short summary) and we’ll tell you if it looks like a scam.",
-        "t4_placeholder": "e.g. “Hello, I am from your bank… we need your OTP to verify a transaction… ”",
-        "t4_label": "Call transcript / summary:",
+        "t1_subheader": "Is this message a scam?",
+        "t1_caption": "Paste any SMS, WhatsApp, or email you're unsure about.",
+        "t1_placeholder": "e.g. Congratulations! You won Rs 10,00,000 in KBC lottery. Pay Rs 5000 fee to claim...",
+        "t1_label": "Suspicious message:",
+        "t1_button": "🔍 Check Message",
+        "t1_warning": "Please paste a message first.",
+        "t1_spinner": "Analyzing message...",
+        "t1_examples_label": "🚀 Try an example:",
+        "t1_ex_lottery": "🎰 Fake Lottery",
+        "t1_ex_bank": "🏦 Fake Bank Alert",
+        "t1_ex_delivery": "📦 Fake Delivery",
+        "t1_tally": "🛡️ {checked} messages checked, {caught} scams caught",
+        "t2_subheader": "Is this link safe to open?",
+        "t2_caption": "Paste any suspicious link or website address — we won't open it, just inspect it.",
+        "t2_placeholder": "e.g. http://sbi-secure-login.xyz/verify-account",
+        "t2_label": "Suspicious link:",
+        "t2_button": "🔍 Inspect Link",
+        "t2_warning": "Please paste a link first.",
+        "t2_spinner": "Inspecting link...",
+        "t3_subheader": "Learn to spot scams",
+        "t3_caption": "Press the button for a practice example and its red flags.",
+        "t3_button": "🎓 Give me a scam example",
+        "t3_spinner": "Creating a practice example...",
+        # ----- CALL CHECKER strings -----
+        "t4_subheader": "Is this phone call a scam?",
+        "t4_caption": "Paste a transcript or description of the call you received.",
+        "t4_placeholder": "e.g. 'Hello, this is Microsoft Technical Support. Your computer has a virus. Please give us remote access…'",
+        "t4_label": "Call transcript / description:",
         "t4_button": "🔍 Check Call",
-        "t4_warning": "Please paste a call transcript first.",
-        "t4_spinner": "Analyzing call …",
-        # ──────────────────────────────────────────────────────
-        #  Existing footer – no change
-        # ──────────────────────────────────────────────────────
+        "t4_warning": "Please paste a call description first.",
+        "t4_spinner": "Analyzing call...",
+        "t4_examples_label": "🚀 Try an example:",
+        "t4_ex_tech": "💻 Fake Tech Support",
+        "t4_ex_irs": "💰 IRS / Tax Scam",
+        "t4_ex_bank": "🏦 Bank OTP Scam",
+        "t4_tally": "🛡️ {checked} calls checked, {caught} scam calls caught",
+        "footer": "🛡️ Raksha — Protects. Inspects. Teaches. Built with one reusable ask_ai() helper across all three tools.",
     },
     "Hindi": {
-        # … keep all existing Hindi strings …
-        "why_bullets": (
-            "✅ असली समस्या, असली मिशन\n\n"
-            "✅ 1 नहीं, 3 काम करने वाले टूल\n\n"
-            "✅ 5 भारतीय भाषाएँ समर्थित\n\n"
-            "✅ एक साफ ask_ai() हेल्पर हर जगह उपयोग किया गया\n"
-            "✅ **नया:** कॉल‑चेकर – कॉल ट्रांसक्रिप्ट पेस्ट करें, तुरंत सुरक्षा सलाह मिलें"
-        ),
-        "tab4": "📞 कॉल चेकर",
-        "t4_subheader": "क्या किसी ने फ़ोन पर आपको धोखा देने की कोशिश की?",
-        "t4_caption": "फ़ोन कॉल का टेक्स्ट (या छोटा सार) पेस्ट करें, हम बतायेंगे यह धोखाधड़ी है या नहीं।",
-        "t4_placeholder": "जैसे “नमस्ते, मैं आपके बैंक से बोल रहा हूँ… हमें आपका OTP चाहिए… ”",
-        "t4_label": "कॉल ट्रांसक्रिप्ट / सार:",
+        "hero_title": "🛡️ रक्षा — पारिवारिक डिजिटल सुरक्षा रक्षक",
+        "hero_sub": "ऑनलाइन धोखाधड़ी से परिवारों की सुरक्षा — संदिग्ध संदेशों की जांच, संदिग्ध लिंक की जांच, और लोगों को धोखाधड़ी पहचानना सिखाता है। असली परिवारों के लिए बनाया गया। अंग्रेज़ी, हिंदी, तेलुगु, तमिल और कन्नड़ में उपलब्ध।",
+        "mission_title": "🛡️ हमारा मिशन",
+        "mission_text": "हर दिन हज़ारों भारतीय परिवार ऑनलाइन धोखाधड़ी में पैसा गंवाते हैं। बुज़ुर्ग सबसे बड़े निशाने पर होते हैं। रक्षा सुरक्षा करता है, जांचता है, और परिवार की अपनी भाषा में सिखाता है।",
+        "lang_label": "🌐 अपनी भाषा चुनें",
+        "lang_caption": "रक्षा इस भाषा में जवाब देगा:",
+        "why_title": "रक्षा क्यों जीतता है",
+        "why_bullets": "✅ असली समस्या, असली मिशन\n\n✅ 1 नहीं, 3 काम करने वाले टूल\n\n✅ 5 भारतीय भाषाएँ समर्थित\n\n✅ एक साफ ask_ai() हेल्पर हर जगह उपयोग किया गया",
+        "model_caption": "मॉडल: llama-3.3-70b-versatile, Groq द्वारा",
+        "tab1": "📩 संदेश जांचक",
+        "tab2": "🔗 लिंक निरीक्षक",
+        "tab3": "🎓 सीखें और प्रश्नोत्तरी",
+        "tab4": "📞 कॉल जांचक",
+        "t1_subheader": "क्या यह संदेश धोखाधड़ी है?",
+        "t1_caption": "कोई भी संदिग्ध SMS, WhatsApp, या ईमेल यहाँ पेस्ट करें।",
+        "t1_placeholder": "जैसे: बधाई हो! आपने KBC लॉटरी में 10,00,000 रुपये जीते हैं। दावा करने के लिए 5000 रुपये फीस भेजें...",
+        "t1_label": "संदिग्ध संदेश:",
+        "t1_button": "🔍 संदेश जांचें",
+        "t1_warning": "कृपया पहले एक संदेश पेस्ट करें।",
+        "t1_spinner": "संदेश की जांच हो रही है...",
+        "t1_examples_label": "🚀 एक उदाहरण आज़माएं:",
+        "t1_ex_lottery": "🎰 फर्जी लॉटरी",
+        "t1_ex_bank": "🏦 फर्जी बैंक अलर्ट",
+        "t1_ex_delivery": "📦 फर्जी डिलीवरी",
+        "t1_tally": "🛡️ {checked} संदेश जांचे गए, {caught} धोखाधड़ी पकड़ी गई",
+        "t2_subheader": "क्या यह लिंक खोलना सुरक्षित है?",
+        "t2_caption": "कोई भी संदिग्ध लिंक या वेबसाइट पता पेस्ट करें — हम उसे नहीं खोलेंगे, सिर्फ जांचेंगे।",
+        "t2_placeholder": "जैसे: http://sbi-secure-login.xyz/verify-account",
+        "t2_label": "संदिग्ध लिंक:",
+        "t2_button": "🔍 लिंक जांचें",
+        "t2_warning": "कृपया पहले एक लिंक पेस्ट करें।",
+        "t2_spinner": "लिंक की जांच हो रही है...",
+        "t3_subheader": "धोखाधड़ी पहचानना सीखें",
+        "t3_caption": "अभ्यास उदाहरण और उसके चेतावनी संकेतों के लिए बटन दबाएं।",
+        "t3_button": "🎓 मुझे एक धोखाधड़ी उदाहरण दें",
+        "t3_spinner": "अभ्यास उदाहरण बनाया जा रहा है...",
+        # ----- CALL CHECKER strings (Hindi) -----
+        "t4_subheader": "क्या यह फ़ोन कॉल धोखाधड़ी है?",
+        "t4_caption": "कॉल का ट्रांस्क्रिप्ट या विवरण यहाँ पेस्ट करें।",
+        "t4_placeholder": "उदाहरण: 'नमस्ते, मैं माइक्रोसॉफ्ट टेक्निकल सपोर्ट से बोल रहा हूँ। आपके कंप्यूटर में वायरस है। कृपया हमें रिमोट एक्सेस दें…'",
+        "t4_label": "कॉल ट्रांस्क्रिप्ट / विवरण:",
         "t4_button": "🔍 कॉल जांचें",
-        "t4_warning": "कृपया पहले एक कॉल ट्रांसक्रिप्ट पेस्ट करें।",
-        "t4_spinner": "कॉल की जांच हो रही है…",
+        "t4_warning": "कृपया पहले एक कॉल विवरण पेस्ट करें।",
+        "t4_spinner": "कॉल का विश्लेषण हो रहा है...",
+        "t4_examples_label": "🚀 एक उदाहरण आज़माएं:",
+        "t4_ex_tech": "💻 नकली टेक सपोर्ट",
+        "t4_ex_irs": "💰 आईआरएस / टैक्स धोखाधड़ी",
+        "t4_ex_bank": "🏦 बैंक OTP धोखाधड़ी",
+        "t4_tally": "🛡️ {checked} कॉल जांचे गए, {caught} धोखाधड़ी कॉल पकड़ी गई",
+        "footer": "🛡️ रक्षा — सुरक्षा करता है। जांचता है। सिखाता है। तीनों टूल में एक ही ask_ai() हेल्पर के साथ बनाया गया।",
     },
     "Telugu": {
-        # … keep all existing Telugu strings …
-        "why_bullets": (
-            "✅ నిజమైన సమస్య, నిజమైన లక్ష్యం\n\n"
-            "✅ 1 కాదు, 3 పనిచేసే సాధనాలు\n\n"
-            "✅ 5 భారతీయ భాషలకు మద్దతు\n\n"
-            "✅ ఒకే ask_ai() హెల్పర్ అన్నిచోట్లా వాడబడింది\n"
-            "✅ **కొత్తది:** కాల్‑చెక్చర్ – కాల్ ట్రాన్స్‌క్రిప్ట్ పేస్ట్ చేయండి, తక్షణంగా సురక్షితతా సూచనలును పొందండి"
-        ),
-        "tab4": "📞 కాల్ చెకర్",
-        "t4_subheader": "ఫోన్‌లో ఎవరో మిమ్మల్ని మోసం చేయడానికి ప్రయత్నించారా?",
-        "t4_caption": "కాల్ సంభాషణ టెక్స్ట్ (లేదా చిన్న సంగ్రహం) పేస్ట్ చేయండి, మేము అది మోసం인가 అని చెబుతాము.",
-        "t4_placeholder": "ఉదా. “హలో, నేను మీ బ్యాంక్ నుండి… ట్రాన్సాక్షన్ వేరీఫై చేసేందుకు మీ OTP అవసరం…”",
-        "t4_label": "కాల్ ట్రాన్స్‌క్రిప్ట్ / సంగ్రహం:",
-        "t4_button": "🔍 కాల్‌ను తనిఖీ చేయండి",
-        "t4_warning": "దయచేసి ముందుగా కాల్ ట్రాన్స్‌క్రిప్ట్ పేస్ట్ చేయండి.",
-        "t4_spinner": "కాల్ విశ్లేషిస్తోంది…",
-    },
-    "Tamil": {
-        # … keep all existing Tamil strings …
-        "why_bullets": (
-            "✅ உண்மையான பிரச்சனை, உண்மையான நோக்கம்\n\n"
-            "✅ 1 அல்ல, 3 செயல்படும் கருவிகள்\n\n"
-            "✅ 5 இந்திய மொழிகள் ஆதரிக்கப்படுகின்றன\n\n"
-            "✅ ஒரே ask_ai() உதவியாளர் எல்லா இடங்களிலும் பயன்படுத்தப்படுகிறது\n"
-            "✅ **புதியது:** கால்‑செக்கர் – கால் உரை ஒட்டுங்கள், உடனடி பாதுகாப்பு ஆலோசனையைப் பெறுங்கள்"
-        ),
-        "tab4": "📞 கால் செக்கர்",
-        "t4_subheader": "யாராவது உங்களுக்கு தொலைபேசி மூலம் மோசடி செய்ய முயற்சித்தாரா?",
-        "t4_caption": "அந்த அழைப்பின் உரையை (அல்லது சுருக்கத்தை) ஒட்டு, அது மோசடியா என்பதை அறியுங்கள்.",
-        "t4_placeholder": "எ.கா. “வணக்கம், நாங்கள் உங்கள் வங்கியிலிருந்து… உங்கள் OTP‑ஐ தேவைப்படுகிறோம்…”",
-        "t4_label": "கால் உரை / சுருக்கம்:",
-        "t4_button": "🔍 கால்‑ஐ சரிபார்க்கவும்",
-        "t4_warning": "முதலில் ஒரு கால் உரை ஒட்டு.",
-        "t4_spinner": "கால் பகுப்பாய்வு செய்கிறது…",
-    },
-    "Kannada": {
-        # … keep all existing Kannada strings …
-        "why_bullets": (
-            "✅ ನಿಜವಾದ ಸಮಸ್ಯೆ, ನಿಜವಾದ ಧ್ಯೇಯ\n\n"
-            "✅ 1 ಅಲ್ಲ, 3 ಕೆಲಸ ಮಾಡುವ ಸಾಧನಗಳು\n\n"
-            "✅ 5 ಭಾರತೀಯ ಭಾಷೆಗಳಿಗೆ ಬೆಂಬಲ\n\n"
-            "✅ ಒಂದೇ ask_ai() ಸಹಾಯಕವನ್ನು ಎಲ್ಲೆಡೆ ಬಳಸಲಾಗಿದೆ\n"
-            "✅ **ಹೊಸದು:** ಕಾಲ್‑ಚೆಕ್ಕರ್ – ಕಾಲ್ ಟ್ರಾನ್ಸ್ಕ್ರಿಪ್ಟ್ ಅಂಟಿಸಿ, ತಕ್ಷಣದ ಸುರಕ್ಷತಾ ಸಲಹೆ ಪಡೆಯಿರಿ"
-        ),
-        "tab4": "📞 ಕಾಲ್ ಚೆಕ್ಕರ್",
-        "t4_subheader": "ಫೋನ್ ಮೂಲಕ ನಿಮಗೆ ಮೋಸ ಮಾಡಲು ಯಾರು ಪ್ರಯತ್ನಿಸಿದ್ದಾರಾ?",
-        "t4_caption": "ಫೋನ್ ಕರೆಗೆ ಸಂಬಂಧಿಸಿದ ಪಠ್ಯ (ಅಥವಾ ಚಿಕ್ಕ ಸಾರಾಂಶ) ಅಂಟಿಸಿ, ಅದು ಮೋಸದದೋ ಇಲ್ಲವೋ ತಿಳಿದುಕೊಳ್ಳಿ.",
-        "t4_placeholder": "ಉದಾ. “ಹಲೋ, ನಾನು ನಿಮ್ಮ ಬ್ಯಾಂಕ್‌ನಿಂದ… ನಿಮ್ಮ OTP ಅಗತ್ಯವಿದೆ… ”",
-        "t4_label": "ಕಾಲ್ ಟ್ರಾನ್ಸ್ಕ್ರಿಪ್ಟ್ / ಸಾರಾಂಶ:",
-        "t4_button": "🔍 ಕಾಲ್ ಪರಿಶೀಲಿಸಿ",
-        "t4_warning": "ದಯವಿಟ್ಟು ಮೊದಲು ಕಾಲ್ ಟ್ರಾನ್ಸ್ಕ್ರಿಪ್ಟ್ ಅಂಟಿಸಿ.",
-        "t4_spinner": "ಕಾಲ್ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ…",
-    },
-}
-Tip: If you ever need to add more languages, just copy any block above, translate the strings, and add the new language key to the TEXT dict and to the LANGUAGES list.
-
-2️⃣ Add the new tab to the UI
-Place the following code right after the existing three tabs (tab1, tab2, tab3 = st.tabs([...])).
-It creates the fourth tab (tab4) and follows the exact same pattern as the Message‑Checker:
-
-# ---------------------------------------------------------
-# TABS (now 4 tabs)
-# ---------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs([
-    L["tab1"],
-    L["tab2"],
-    L["tab3"],
-    L["tab4"],          # <-- NEW TAB LABEL
-])
-
-# =========================================================
-# PART B — Tab 1: Message Checker   (unchanged)
-# =========================================================
-#   ... (your existing Message‑Checker code) ...
-
-# =========================================================
-# PART C — Tab 2: Link Inspector    (unchanged)
-# =========================================================
-#   ... (your existing Link‑Inspector code) ...
-
-# =========================================================
-# PART D — Tab 3: Learn & Quiz      (unchanged)
-# =========================================================
-#   ... (your existing Learn‑&‑Quiz code) ...
-
-# =========================================================
-# PART E — Tab 4: Call Checker  (NEW)
-# =========================================================
-with tab4:
-    st.subheader(L["t4_subheader"])
-    st.caption(L["t4_caption"])
-
-    # Re‑use the same tally box (messages_checked / scams_caught)
-    st.markdown(
-        f'<div class="tally-box">{L["t1_tally"].format(checked=st.session_state.messages_checked, caught=st.session_state.scams_caught)}</div>',
-        unsafe_allow_html=True,
-    )
-
-    call_text = st.text_area(
-        L["t4_label"],
-        height=160,
-        key="call_text",
-        placeholder=L["t4_placeholder"]
-    )
-
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        check_call = st.button(L["t4_button"], use_container_width=True)
-
-    if check_call:
-        if not call_text.strip():
-            st.warning(L["t4_warning"])
-        else:
-            system = (
-                "You are Raksha, a call‑scam detection guardian. Reply as:\n"
-                "Verdict: SAFE / SUSPICIOUS / LIKELY SCAM\n"
-                "Risk: Low / Medium / High\n"
-                "Confidence: a percentage from 0 to 100 showing how sure you are\n"
-                "Warning signs: the exact red flags you found in the call (e.g., urgent request for OTP, "
-                "request for remote‑access tools, pressure tactics, impersonation of a bank/agency).\n"
-                "What to do: simple advice for the user (e.g., do not share OTP, hang up, contact official bank, "
-                "report to authorities).\n"
-                f"Use very simple, everyday language. Reply entirely in {selected_language}, "
-                "regardless of the language the input call text is in."
-            )
-            with st.spinner(L["t4_spinner"]):
-                result = ask_ai(system, call_text)
-
-            verdict = render_verdict(result)
-
-            # Update the global counters (same as Message‑Checker)
-            st.session_state.messages_checked += 1
-            if verdict == "SCAM":
-                st.session_state.scams_caught += 1
+        "hero_title": "🛡️
