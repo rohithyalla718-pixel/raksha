@@ -1032,7 +1032,7 @@ with st.sidebar:
     st.markdown(f"### {UI['stats']}")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric(UI["messages_checked"], st.session_state.messages_checked)
+        st.metric(T["messages_checked"], st.session_state.messages_checked)
     with col2:
         st.metric(UI["scams_caught"], st.session_state.scams_caught)
 
