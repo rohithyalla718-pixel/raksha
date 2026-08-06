@@ -3,7 +3,7 @@ from groq import Groq
 import random
 import re
 import calendar
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 # ---------------------------------------------------------
 # PART A — Setup + the ONE reusable AI helper
@@ -13,7 +13,7 @@ MODEL = "llama-3.3-70b-versatile"
 
 
 def ask_ai(system_prompt, user_text):
-    """The single AI helper every tab reuses."""
+    """The single AI helper every tab reuses. Write once, use everywhere."""
     completion = client.chat.completions.create(
         model=MODEL,
         messages=[
@@ -65,33 +65,33 @@ def parse_confidence(result_text):
 
 
 def render_verdict(result_text):
-    """Color-coded verdict box with 3D glass effect."""
+    """Color-coded verdict box with soft light-theme 3D glass."""
     verdict = parse_verdict(result_text)
     confidence = parse_confidence(result_text)
 
     if verdict == "SCAM":
-        border_color, glow, icon = "#ef4444", "rgba(239,68,68,0.35)", "🚨"
+        border, glow, icon = "#ef4444", "rgba(239,68,68,0.12)", "🚨"
     elif verdict == "SUSPICIOUS":
-        border_color, glow, icon = "#f59e0b", "rgba(245,158,11,0.35)", "⚠️"
+        border, glow, icon = "#f59e0b", "rgba(245,158,11,0.12)", "⚠️"
     elif verdict == "SAFE":
-        border_color, glow, icon = "#10b981", "rgba(16,185,129,0.35)", "🛡️"
+        border, glow, icon = "#10b981", "rgba(16,185,129,0.12)", "🛡️"
     else:
-        border_color, glow, icon = "#4F9DF7", "rgba(79,157,247,0.35)", "ℹ️"
+        border, glow, icon = "#1E63D0", "rgba(30,99,208,0.12)", "ℹ️"
 
     box_html = f"""
     <div class="tilt-hover" style="
-        background: rgba(30, 41, 59, 0.75);
-        backdrop-filter: blur(12px);
-        border: 1px solid {border_color};
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid {border};
         border-radius: 18px;
-        padding: 1.5rem;
+        padding: 1.4rem;
         margin: 1rem 0;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.4), 0 0 25px {glow};
+        box-shadow: 0 12px 30px rgba(0,0,0,0.06), 0 0 20px {glow};
         transform-style: preserve-3d;
         transition: transform 0.4s ease, box-shadow 0.4s ease;
     ">
-        <div style="font-size: 1.8rem; margin-bottom: 0.5rem; text-shadow: 0 0 15px {glow};">{icon}</div>
-        <div style="white-space: pre-wrap; color: #e2e8f0; line-height: 1.6;">{result_text}</div>
+        <div style="font-size: 1.6rem; margin-bottom: 0.4rem;">{icon}</div>
+        <div style="white-space: pre-wrap; color: #1A1A2E; line-height: 1.6;">{result_text}</div>
     </div>
     """
     st.markdown(box_html, unsafe_allow_html=True)
@@ -216,8 +216,9 @@ TEXT = {
         "mission_title": "🛡️ हमारा मिशन",
         "mission_text": "हर दिन हज़ारों भारतीय परिवार ऑनलाइन धोखाधड़ी में पैसा गंवाते हैं। बुज़ुर्ग सबसे बड़े निशाने पर होते हैं। रक्षा सुरक्षा करता है, जांचता है, और सिखाता है।",
         "lang_label": "🌐 अपनी भाषा चुनें",
+        "lang_caption": "रक्षा इस भाषा में जवाब देगा:",
         "why_title": "रक्षा क्यों जीतता है",
-        "why_bullets": "✅ असली समस्या, असली मिशन\n\n✅ 4 सुरक्षा टूल\n\n✅ 5 भारतीय भाषाएँ\n\n✅ 3D ग्लास डिज़ाइन",
+        "why_bullets": "✅ असली समस्या, असली मिशन\n\n✅ 4 सुरक्षा टूल\n\n✅ 5 भारतीय भाषाएँ समर्थित\n\n✅ 3D ग्लास डिज़ाइन",
         "model_caption": "मॉडल: llama-3.3-70b-versatile, Groq द्वारा",
         "tab1": "📩 संदेश जांचक",
         "tab2": "🔗 लिंक निरीक्षक",
@@ -266,6 +267,7 @@ TEXT = {
         "mission_title": "🛡️ మా లక్ష్యం",
         "mission_text": "ప్రతిరోజూ వేలాది భారతీయ కుటుంబాలు ఆన్‌లైన్ మోసాలలో డబ్బు కోల్పోతున్నాయి. వృద్ధులు అత్యధికంగా లక్ష్యంగా ఉంటారు. రక్ష రక్షిస్తుంది, పరిశీలిస్తుంది, నేర్పిస్తుంది.",
         "lang_label": "🌐 మీ భాషను ఎంచుకోండి",
+        "lang_caption": "రక్ష ఈ భాషలో సమాధానం ఇస్తుంది:",
         "why_title": "రక్ష ఎందుకు గెలుస్తుంది",
         "why_bullets": "✅ నిజమైన సమస్య, నిజమైన లక్ష్యం\n\n✅ 4 భద్రతా సాధనాలు\n\n✅ 5 భారతీయ భాషలు",
         "model_caption": "మోడల్: llama-3.3-70b-versatile, Groq ద్వారా",
@@ -293,7 +295,7 @@ TEXT = {
         "t2_warning": "దయచేసి ముందుగా ఒక లింక్‌ను పేస్ట్ చేయండి.",
         "t2_spinner": "లింక్‌ను పరిశీలిస్తోంది...",
         "t3_subheader": "తేదీలు & డెడ్‌లైన్‌లను ధృవీకరించండి",
-        "t3_caption": "అనుమానాస్పద సందేశంలోని తేదీని పేస్ట్ చేయండి — అది నకిలీ, అసాధ్యం, లేదా ఒత్తిడి ತంత్రమా?",
+        "t3_caption": "అనుమానాస్పద సందేశంలోని తేదీని పేస్ట్ చేయండి — అది నకిలీ, అసాధ్యం, లేదా ఒత్తిడి తంత్రమా?",
         "t3_input_label": "అనుమానాస్పద తేదీ / డెడ్‌లైన్:",
         "t3_date_label": "లేదా క్యాలెండర్ నుండి ఎంచుకోండి:",
         "t3_button": "🔍 తేదీని ధృవీకరించండి",
@@ -316,6 +318,7 @@ TEXT = {
         "mission_title": "🛡️ எங்கள் நோக்கம்",
         "mission_text": "ஒவ்வொரு நாளும் ஆயிரக்கணக்கான இந்திய குடும்பங்கள் ஆன்லைன் மோசடியில் பணத்தை இழக்கின்றன. முதியவர்களே அதிக இலக்கு.",
         "lang_label": "🌐 உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்",
+        "lang_caption": "ரக்ஷா இந்த மொழியில் பதிலளிக்கும்:",
         "why_title": "ரக்ஷா ஏன் வெற்றி பெறுகிறது",
         "why_bullets": "✅ உண்மையான பிரச்சனை, உண்மையான நோக்கம்\n\n✅ 4 பாதுகாப்பு கருவிகள்\n\n✅ 5 இந்திய மொழிகள்",
         "model_caption": "மாடல்: llama-3.3-70b-versatile, Groq மூலம்",
@@ -366,6 +369,7 @@ TEXT = {
         "mission_title": "🛡️ ನಮ್ಮ ಧ್ಯೇಯ",
         "mission_text": "ಪ್ರತಿದಿನ ಸಾವಿರಾರು ಭಾರತೀಯ ಕುಟುಂಬಗಳು ಆನ್‌ಲೈನ್ ವಂಚನೆಯಲ್ಲಿ ಹಣ ಕಳೆದುಕೊಳ್ಳುತ್ತವೆ. ಹಿರಿಯರೇ ಅತಿ ದೊಡ್ಡ ಗುರಿ.",
         "lang_label": "🌐 ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆರಿಸಿ",
+        "lang_caption": "ರಕ್ಷಾ ಈ ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರಿಸುತ್ತದೆ:",
         "why_title": "ರಕ್ಷಾ ಏಕೆ ಗೆಲ್ಲುತ್ತದೆ",
         "why_bullets": "✅ ನಿಜವಾದ ಸಮಸ್ಯೆ, ನಿಜವಾದ ಧ್ಯೇಯ\n\n✅ 4 ಸುರಕ್ಷತಾ ಸಾಧನಗಳು\n\n✅ 5 ಭಾರತೀಯ ಭಾಷೆಗಳು",
         "model_caption": "ಮಾದರಿ: llama-3.3-70b-versatile, Groq ಮೂಲಕ",
@@ -394,11 +398,11 @@ TEXT = {
         "t2_spinner": "ಲಿಂಕ್ ಅನ್ನು ಪರಿಶೀಲಿಸುತ್ತಿದೆ...",
         "t3_subheader": "ದಿನಾಂಕಗಳು ಮತ್ತು ಗಡುವುಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
         "t3_caption": "ಸಂಶಯಾಸ್ಪದ ಸಂದೇಶದಿಂದ ದಿನಾಂಕವನ್ನು ಅಂಟಿಸಿ — ಅದು ನಕಲಿ, ಅಸಾಧ್ಯ, ಅಥವಾ ಒತ್ತಡ ಸಾಧನವೇ?",
-        "t3_input_label": "ಸಂಶಯಾಸ್ಪದ ದினಾಂಕ / ಗಡುವು:",
+        "t3_input_label": "ಸಂಶಯಾಸ್ಪದ ದಿನಾಂಕ / ಗಡುವು:",
         "t3_date_label": "ಅಥವಾ ಕ್ಯಾಲೆಂಡರ್‌ನಿಂದ ಆಯ್ಕೆಮಾಡಿ:",
         "t3_button": "🔍 ದಿನಾಂಕವನ್ನು ಪರಿಶೀಲಿಸಿ",
         "t3_warning": "ದಯವಿಟ್ಟು ಮೊದಲು ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಆಯ್ಕೆಮಾಡಿ.",
-        "t3_spinner": "ದಿನಾಂಕ ವ champions ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ...",
+        "t3_spinner": "ದಿನಾಂಕ ವಿನ್ಯಾಸವನ್ನು ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ...",
         "t3_valid": "✅ ಮಾನ್ಯ ಕ್ಯಾಲೆಂಡರ್ ದಿನಾಂಕ",
         "t3_invalid": "❌ ಅಮಾನ್ಯ / ಅಸಾಧ್ಯ ದಿನಾಂಕ",
         "t3_day": "ವಾರದ ದಿನ",
@@ -415,7 +419,7 @@ TEXT = {
 LANGUAGES = ["English", "Hindi", "Telugu", "Tamil", "Kannada"]
 
 # ---------------------------------------------------------
-# Language selector (must be first)
+# Language picker
 # ---------------------------------------------------------
 with st.sidebar:
     selected_language = st.selectbox(
@@ -424,7 +428,7 @@ with st.sidebar:
     L = TEXT[selected_language]
 
 # ---------------------------------------------------------
-# 3D GLASSMORPHISM DESIGN SYSTEM
+# LIGHT THEME CSS — soft, trustworthy, judge-friendly
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -432,193 +436,153 @@ st.markdown("""
 
 html, body, .stApp {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #0b1120 0%, #1e293b 100%);
-    color: #e2e8f0;
+    background: #FFFFFF;
+    color: #1A1A2E;
 }
 
-/* Animated ambient background blobs */
+/* Subtle ambient glow on light bg */
 .stApp::before {
     content: "";
     position: fixed;
     inset: 0;
     background:
-        radial-gradient(circle at 15% 25%, rgba(79,157,247,0.12) 0%, transparent 40%),
-        radial-gradient(circle at 85% 75%, rgba(111,195,160,0.12) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(99,102,241,0.08) 0%, transparent 50%);
+        radial-gradient(circle at 15% 25%, rgba(79,157,247,0.05) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(111,195,160,0.05) 0%, transparent 40%);
     z-index: -1;
-    animation: bgShift 12s ease-in-out infinite alternate;
-}
-@keyframes bgShift {
-    0% { transform: scale(1) translate(0,0); }
-    100% { transform: scale(1.08) translate(-1%, -1%); }
 }
 
-/* Sidebar glass */
+/* Sidebar light frosted */
 [data-testid="stSidebar"] {
-    background: rgba(15, 23, 42, 0.95) !important;
-    backdrop-filter: blur(24px) saturate(180%) !important;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    background: rgba(242, 245, 250, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    border-right: 1px solid rgba(0,0,0,0.05);
 }
 
-/* Hero 3D Float */
+/* 3D Hero — soft gradient, white text */
 .hero-3d-wrap {
     perspective: 1200px;
     transform-style: preserve-3d;
-    margin-bottom: 2rem;
+    margin-bottom: 1.8rem;
 }
 .hero-card {
-    background: rgba(30, 41, 59, 0.65);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px;
-    padding: 2.5rem;
-    transform: translateZ(40px) rotateX(2deg);
-    box-shadow:
-        0 25px 60px rgba(0,0,0,0.5),
-        0 0 0 1px rgba(255,255,255,0.06),
-        inset 0 1px 0 rgba(255,255,255,0.1);
-    animation: heroFloat 7s ease-in-out infinite;
-    transition: transform 0.5s ease;
-}
-.hero-3d-wrap:hover .hero-card {
-    transform: translateZ(60px) rotateX(0deg) rotateY(0deg);
-}
-@keyframes heroFloat {
-    0%, 100% { transform: translateZ(40px) translateY(0px) rotateX(2deg); }
-    50% { transform: translateZ(50px) translateY(-10px) rotateX(-1deg); }
+    background: linear-gradient(90deg, #4F9DF7, #6FC3A0);
+    border-radius: 20px;
+    padding: 2.4rem;
+    transform: translateZ(30px);
+    box-shadow: 0 20px 40px rgba(79,157,247,0.18);
+    animation: heroFloat 6s ease-in-out infinite;
+    border: 1px solid rgba(255,255,255,0.4);
 }
 .hero-card h1 {
-    color: #f8fafc;
-    font-size: 2.4rem;
+    color: #ffffff;
+    font-size: 2.3rem;
     margin: 0;
     font-weight: 800;
     letter-spacing: -0.5px;
-    text-shadow: 0 0 30px rgba(79,157,247,0.3);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 .hero-card p {
-    color: #cbd5e1;
-    font-size: 1.08rem;
-    margin-top: 0.6rem;
+    color: #f0f9ff;
+    font-size: 1.05rem;
+    margin-top: 0.5rem;
     margin-bottom: 0;
     line-height: 1.6;
+}
+@keyframes heroFloat {
+    0%, 100% { transform: translateZ(30px) translateY(0); }
+    50% { transform: translateZ(42px) translateY(-8px); }
 }
 
 /* 3D Buttons */
 .stButton > button {
-    background: linear-gradient(135deg, #4F9DF7, #6366f1) !important;
-    color: white !important;
+    background: linear-gradient(135deg, #1E63D0, #4F9DF7) !important;
+    color: #ffffff !important;
     border: none !important;
-    border-radius: 14px !important;
-    padding: 0.7rem 1.8rem !important;
+    border-radius: 12px !important;
+    padding: 0.6rem 1.6rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0.5px;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 8px 18px rgba(30,99,208,0.2) !important;
     transform-style: preserve-3d;
-    box-shadow:
-        0 12px 20px -4px rgba(79,157,247,0.45),
-        0 4px 8px -2px rgba(79,157,247,0.25) !important;
-    position: relative;
-    overflow: hidden;
-}
-.stButton > button::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(rgba(255,255,255,0.2), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
 }
 .stButton > button:hover {
-    transform: translateY(-4px) translateZ(20px) rotateX(5deg) scale(1.02) !important;
-    box-shadow:
-        0 24px 40px -6px rgba(79,157,247,0.55),
-        0 10px 15px -4px rgba(79,157,247,0.35) !important;
-}
-.stButton > button:hover::after {
-    opacity: 1;
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow: 0 14px 28px rgba(30,99,208,0.28) !important;
 }
 .stButton > button:active {
-    transform: translateY(1px) rotateX(12deg) scale(0.97) !important;
+    transform: translateY(1px) scale(0.98) !important;
 }
 
-/* Glass Inputs */
-.stTextArea textarea, .stTextInput input, div[data-baseweb="input"] input {
-    background: rgba(15, 23, 42, 0.6) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+/* Inputs — clean white */
+.stTextArea textarea,
+.stTextInput input,
+div[data-baseweb="input"] input,
+div[data-baseweb="textarea"] textarea {
+    background: #FFFFFF !important;
+    border: 1px solid #dbeafe !important;
     border-radius: 12px !important;
-    color: #e2e8f0 !important;
-    backdrop-filter: blur(4px) !important;
+    color: #1A1A2E !important;
 }
-.stTextArea textarea:focus, .stTextInput input:focus {
-    border-color: #4F9DF7 !important;
-    box-shadow: 0 0 0 4px rgba(79,157,247,0.2) !important;
+.stTextArea textarea:focus,
+.stTextInput input:focus {
+    border-color: #1E63D0 !important;
+    box-shadow: 0 0 0 4px rgba(30,99,208,0.08) !important;
 }
 
-/* Tab 3D */
+/* Tabs light */
 div[data-testid="stTabs"] button {
-    background: rgba(255,255,255,0.04) !important;
+    background: rgba(0,0,0,0.03) !important;
     border-radius: 12px 12px 0 0 !important;
     border: none !important;
-    color: #94a3b8 !important;
+    color: #64748b !important;
     font-weight: 600 !important;
-    padding: 0.7rem 1.4rem !important;
-    transition: all 0.3s ease !important;
+    padding: 0.6rem 1.2rem !important;
+    transition: all 0.25s ease !important;
 }
 div[data-testid="stTabs"] button[aria-selected="true"] {
-    background: rgba(79,157,247,0.18) !important;
-    color: #60a5fa !important;
-    transform: translateZ(8px) translateY(-2px);
-    box-shadow: 0 -6px 20px rgba(79,157,247,0.15) !important;
-    border-bottom: 2px solid #4F9DF7 !important;
+    background: rgba(30,99,208,0.08) !important;
+    color: #1E63D0 !important;
+    transform: translateY(-2px);
+    border-bottom: 2px solid #1E63D0 !important;
 }
 
-/* Progress glow */
+/* Progress bar accent */
 .stProgress > div > div {
-    background: linear-gradient(90deg, #4F9DF7, #6FC3A0) !important;
-    box-shadow: 0 0 12px rgba(79,157,247,0.6);
+    background: linear-gradient(90deg, #1E63D0, #4F9DF7) !important;
+    box-shadow: 0 0 10px rgba(30,99,208,0.25);
     border-radius: 999px;
 }
 
-/* Tally box */
+/* Tally */
 .tally-box-3d {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16,185,129,0.35);
-    border-radius: 14px;
-    padding: 1rem;
-    backdrop-filter: blur(10px);
-    transform: translateZ(10px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    color: #047857;
     font-weight: 700;
-    color: #34d399;
-    text-shadow: 0 0 12px rgba(52,211,153,0.25);
 }
 
-/* Calendar card */
+/* Calendar helper card */
 .cal-card {
-    background: rgba(30,41,59,0.6);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.06);
     border-radius: 16px;
     padding: 1.2rem;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    transform: translateZ(5px);
-    transition: transform 0.3s ease;
-}
-.cal-card:hover {
-    transform: translateY(-4px) translateZ(15px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.04);
 }
 
 /* Footer */
 .footer-tag {
     text-align: center;
-    color: #64748b;
+    color: #94a3b8;
     font-size: 0.85rem;
     margin-top: 3rem;
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(0,0,0,0.06);
 }
 
-/* Smooth tilt interaction helper */
+/* Tilt interaction surface */
 .tilt-hover {
     transition: transform 0.1s linear;
 }
@@ -626,7 +590,7 @@ div[data-testid="stTabs"] button[aria-selected="true"] {
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HERO BANNER (3D)
+# HERO BANNER
 # ---------------------------------------------------------
 st.markdown(f"""
 <div class="hero-3d-wrap">
@@ -751,7 +715,7 @@ with tab2:
             render_verdict(result)
 
 # ---------------------------------------------------------
-# TAB 3 — Date / Calendar Verifier (NEW)
+# TAB 3 — Date / Calendar Verifier
 # ---------------------------------------------------------
 with tab3:
     st.subheader(L["t3_subheader"])
@@ -771,9 +735,9 @@ with tab3:
     with dc2:
         st.markdown(
             f"""
-            <div class="cal-card" style="height: 100%;">
-                <strong style="color:#4F9DF7;">📅 {L['t3_ai_title']}</strong>
-                <p style="color:#94a3b8; font-size:0.95rem; margin-top:0.5rem;">
+            <div class="cal-card">
+                <strong style="color:#1E63D0;">📅 {L['t3_ai_title']}</strong>
+                <p style="color:#475569; font-size:0.95rem; margin-top:0.5rem; margin-bottom:0;">
                     Raksha checks calendar validity, impossible dates, weekend traps, and urgency pressure tactics commonly used in payment scams.
                 </p>
             </div>
@@ -784,26 +748,22 @@ with tab3:
     if st.button(L["t3_button"], use_container_width=False):
         raw = date_text.strip()
         if not raw:
-            # use picker
             raw = picker_date.strftime("%d/%m/%Y")
 
         is_valid, dt, msg, flags = check_date_validity(raw)
 
-        # Glass result card
         if is_valid:
-            card_border = "rgba(16,185,129,0.4)"
-            card_glow = "rgba(16,185,129,0.25)"
-            status_icon = "✅"
-            status_text = L["t3_valid"]
+            card_border, card_glow, status_icon, status_text = (
+                "#10b981", "rgba(16,185,129,0.12)", "✅", L["t3_valid"]
+            )
         else:
-            card_border = "rgba(239,68,68,0.4)"
-            card_glow = "rgba(239,68,68,0.25)"
-            status_icon = "🚨"
-            status_text = L["t3_invalid"]
+            card_border, card_glow, status_icon, status_text = (
+                "#ef4444", "rgba(239,68,68,0.12)", "🚨", L["t3_invalid"]
+            )
 
         flag_html = ""
         if flags:
-            flag_html = "<ul style='margin:0.5rem 0 0 1.2rem; padding:0;'>"
+            flag_html = "<ul style='margin:0.5rem 0 0 1.2rem; padding:0; color:#334155;'>"
             for f in flags:
                 flag_html += f"<li style='margin-bottom: 0.3rem;'>{f}</li>"
             flag_html += "</ul>"
@@ -811,19 +771,20 @@ with tab3:
         st.markdown(
             f"""
             <div class="tilt-hover" style="
-                background: rgba(30,41,59,0.7);
+                background: rgba(255,255,255,0.98);
                 backdrop-filter: blur(10px);
                 border: 1px solid {card_border};
                 border-radius: 18px;
-                padding: 1.5rem;
+                padding: 1.4rem;
                 margin: 1.2rem 0;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.4), 0 0 25px {card_glow};
+                box-shadow: 0 12px 30px rgba(0,0,0,0.05), 0 0 20px {card_glow};
+                transform-style: preserve-3d;
             ">
-                <div style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.6rem;">
+                <div style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; color: {card_border};">
                     {status_icon} {status_text}
                 </div>
-                <div style="margin-bottom: 0.8rem;"><strong>Result:</strong> {msg}</div>
-                <div style="color:#cbd5e1;"><strong>{L['t3_flags']}:</strong>{flag_html if flags else '<div style="margin-top:0.3rem;">No obvious date red flags.</div>'}</div>
+                <div style="margin-bottom: 0.6rem; color:#1A1A2E;"><strong>Result:</strong> {msg}</div>
+                <div style="color:#334155;"><strong>{L['t3_flags']}:</strong>{flag_html if flags else '<div style="margin-top:0.3rem;">No obvious date red flags.</div>'}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -842,7 +803,7 @@ with tab3:
         with st.spinner(L["t3_spinner"]):
             ai_result = ask_ai(system, f"The user found this deadline / date in a message: '{raw}'. Analysis?")
 
-        st.markdown(f"<div style='margin-top:0.8rem; color:#94a3b8; font-weight:600;'>{L['t3_ai_title']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='margin-top:0.6rem; color:#475569; font-weight:700;'>{L['t3_ai_title']}</div>", unsafe_allow_html=True)
         render_verdict(ai_result)
 
 # ---------------------------------------------------------
@@ -871,15 +832,15 @@ with tab4:
         st.markdown(
             f"""
             <div class="tilt-hover" style="
-                background: rgba(30,41,59,0.7);
+                background: rgba(255,255,255,0.98);
                 backdrop-filter: blur(10px);
-                border: 1px solid rgba(79,157,247,0.35);
+                border: 1px solid rgba(30,99,208,0.2);
                 border-radius: 18px;
-                padding: 1.5rem;
+                padding: 1.4rem;
                 margin: 1rem 0;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.4), 0 0 20px rgba(79,157,247,0.2);
+                box-shadow: 0 12px 30px rgba(0,0,0,0.05);
             ">
-                <pre style="white-space: pre-wrap; font-family: inherit; color: #e2e8f0; margin:0;">{result}</pre>
+                <pre style="white-space: pre-wrap; font-family: inherit; color: #1A1A2E; margin:0;">{result}</pre>
             </div>
             """,
             unsafe_allow_html=True,
@@ -891,7 +852,7 @@ with tab4:
 st.markdown(f'<div class="footer-tag">{L["footer"]}</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Interactive 3D Tilt Engine (injected once)
+# Interactive 3D Tilt (light containers)
 # ---------------------------------------------------------
 st.components.v1.html(
     """
@@ -903,9 +864,9 @@ st.components.v1.html(
             const y = e.clientY - r.top;
             const cx = r.width / 2;
             const cy = r.height / 2;
-            const rx = (y - cy) / -15;
-            const ry = (x - cx) / 15;
-            card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(20px)`;
+            const rx = (y - cy) / -18;
+            const ry = (x - cx) / 18;
+            card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(12px)`;
         });
         card.addEventListener('mouseleave', () => {
             card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
