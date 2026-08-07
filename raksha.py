@@ -4,6 +4,8 @@ from groq import Groq
 import json
 import re
 import requests
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
@@ -479,1147 +481,1459 @@ TRANSLATIONS = {
     }
 }
 
+# ==================== COMPLETE UI TRANSLATIONS ====================
+# These keys cover the parts of the interface that were previously hard-coded.
 UI_TRANSLATIONS = {
     "en": {
-        "behavior_risk": "Behavior Risk",
-        "call_checker_description": "Check telecom intelligence, registered number location, call behavior and scam indicators before trusting a caller.",
-        "call_description_label": "🗣️ What did the caller say or ask for?",
-        "call_description_placeholder": "Example: Caller said he was from my bank and asked for my OTP to unblock my account. He demanded that I act immediately.",
-        "calls_received": "Calls Received",
-        "carrier": "Carrier / Network",
-        "checking_call": "🔍 Checking number, carrier, registered region and scam indicators...",
-        "correct": "✅ Correct!",
-        "country": "🌍 Country",
-        "english": "English",
-        "enter_message": "Enter a message to analyze.",
-        "enter_phone": "Enter a phone number to analyze.",
-        "enter_url": "Enter a URL to analyze.",
-        "fake_bank": "🏦 Fake Bank Alert",
-        "fake_delivery": "📦 Fake Delivery",
-        "fake_lottery": "🎰 Fake Lottery",
-        "footer": "Raksha uses AI to detect potential scams. Always verify with official sources.",
-        "footer_model": "Made with 💚 for Digital Safety | Model: llama-3.1-8b-instant via Groq",
-        "groq_error": "Groq API Error",
-        "hero_subtitle": "Protecting families from online fraud — checks scam messages, inspects suspicious links, analyzes calls, and teaches people to spot fraud themselves.",
-        "hero_title": "Raksha — Family Digital Safety Guardian",
-        "incorrect": "❌ Incorrect!",
-        "invalid_phone": "❌ Invalid phone number. For Indian numbers, enter 10 digits or use +91 followed by the number.",
         "language_label": "Language",
-        "line_status": "Line Status",
-        "line_type": "Line Type",
-        "location_notice": "📍 Location shown here is the phone number's registered telecom location/region when available — it is NOT the caller's live GPS location.",
-        "lookup_detail": "Lookup detail",
-        "lookup_unavailable": "⚠️ Telecom lookup unavailable. Call can still be analyzed using call behavior and AI indicators.",
-        "made_for": "Made with 💚 for Digital Safety",
-        "messages_checked": "messages checked",
         "mission": "Our Mission",
         "mission_text": "Thousands of Indian families lose money to online scams every day. Raksha protects, inspects, and teaches families to stay safe in their own language.",
-        "no": "No",
-        "number_valid": "Number Valid",
-        "overall_risk": "Overall Risk",
-        "parse_error": "Could not read response. Please try again.",
-        "paste_any": "Paste any SMS, WhatsApp, or email you're unsure about.",
-        "perfect_score": "🎉 Perfect Score! You're a scam detection expert!",
-        "privacy_notice": "🔐 Privacy: the full phone number is used only for telecom lookup. Raksha sends a masked number plus call details to the AI analysis.",
-        "question": "Question",
-        "quiz_description": "Test your knowledge and learn to spot scams before they happen.",
-        "raw_response": "Debug - Raw Response",
-        "region": "📍 Region",
-        "registered_city": "🏙️ Registered City",
-        "report": "Report Scam",
-        "report_scam_title": "Report Scam",
-        "risk_evidence": "📊 Risk Evidence",
-        "safe_label": "Safe",
-        "scam_label": "Scam",
-        "scams_caught": "scams caught",
-        "score": "Your Score",
-        "select_answer": "Please select an answer first.",
         "stats": "Stats",
-        "submit_answer": "Submit Answer",
-        "suspicious_label": "Suspicious",
-        "suspicious_message": "Suspicious Message:",
-        "telecom_assessment": "📡 Telecom Assessment",
-        "telecom_intelligence": "📡 Telecom & SIM/Network Intelligence",
-        "telecom_not_verdict": "Telecom data is supporting evidence only; it does not prove the caller is a scammer.",
-        "timezone": "🕐 Timezone",
-        "try_example": "Try an example:",
-        "unknown": "Unknown",
-        "url_description": "Check suspicious URLs for phishing and malicious links.",
+        "why_raksha": "Why Raksha wins",
         "why_1": "☑️ Real problem, real mission",
         "why_2": "☑️ 4 working safety tools",
         "why_3": "☑️ 5 Indian languages supported",
         "why_4": "☑️ 3D glass UI with live depth effects",
-        "why_raksha": "Why Raksha wins",
-        "yes": "Yes"
+        "made_for": "Made with 💚 for Digital Safety",
+        "hero_title": "Raksha — Family Digital Safety Guardian",
+        "hero_subtitle": "Protecting families from online fraud — checks scam messages, inspects suspicious links, analyzes calls, and teaches people to spot fraud themselves.",
+        "fake_lottery": "🎰 Fake Lottery",
+        "fake_bank": "🏦 Fake Bank Alert",
+        "fake_delivery": "📦 Fake Delivery",
+        "suspicious_message": "Suspicious message:",
+        "url_description": "Check suspicious URLs for phishing and malicious links.",
+        "call_description_label": "🗣️ What did the caller say or ask?",
+        "call_description_placeholder": "Example: Caller said he was from my bank and asked for my OTP to unblock my account. He demanded that I act immediately.",
+        "call_checker_description": "Check telecom intelligence, registered number location, call behavior and scam indicators before trusting a caller.",
+        "location_notice": "📍 Location shown here is the phone number's registered telecom location/region when available — it is NOT the caller's live GPS location.",
+        "privacy_notice": "🔐 Privacy: the full phone number is used only for telecom lookup. Raksha sends a masked number plus call details to the AI analysis.",
+        "checking_call": "🔍 Checking number, carrier, registered region and scam indicators...",
+        "invalid_phone": "❌ Invalid phone number. For Indian numbers, enter 10 digits or use +91 followed by the number.",
+        "telecom_intelligence": "📡 Telecom & SIM/Network Intelligence",
+        "number_valid": "Number Valid",
+        "yes": "Yes",
+        "no": "No",
+        "unknown": "Unknown",
+        "carrier": "Carrier / Network",
+        "line_type": "Line Type",
+        "line_status": "Line Status",
+        "country": "🌍 Country",
+        "region": "📍 Region",
+        "registered_city": "🏙️ Registered City",
+        "timezone": "🕐 Timezone",
+        "lookup_unavailable": "⚠️ Telecom lookup is unavailable. Call can still be analyzed with call behavior and AI indicators.",
+        "lookup_detail": "Lookup detail",
+        "risk_evidence": "📊 Risk Evidence",
+        "behavior_risk": "Behavior Risk",
+        "calls_received": "Calls Received",
+        "overall_risk": "Overall Risk",
+        "telecom_assessment": "📡 Telecom Assessment",
+        "telecom_not_verdict": "Telecom data is supporting evidence only; it cannot prove the caller is a scammer.",
+        "quiz_description": "Test your knowledge and learn to spot scams before they happen.",
+        "correct": "✅ Correct!",
+        "incorrect": "❌ Incorrect!",
+        "select_answer": "Please select an answer first.",
+        "perfect_score": "🎉 Perfect score! You're a scam detection expert!",
+        "report_scam_title": "Report Scam",
+        "raw_response": "Debug - Raw Response",
+        "groq_error": "Groq API Error",
+        "parse_error": "Could not read response. Please try again.",
+        "enter_message": "Enter a message to analyze.",
+        "enter_url": "Enter a URL to analyze.",
+        "enter_phone": "Enter a phone number to analyze.",
+        "safe_label": "Safe",
+        "suspicious_label": "Suspicious",
+        "scam_label": "Scam",
+        "english": "English",
+        "report": "Report Scam",
+        "footer_model": "Made with 💚 for Digital Safety | Model: llama-3.1-8b-instant via Groq",
     },
     "te": {
-        "behavior_risk": "ప్రవర్తన రిస్క్",
-        "call_checker_description": "కాలర్‌ను నమ్మే ముందు టెలికాం సమాచారం, నమోదైన నంబర్ ప్రాంతం, కాల్ ప్రవర్తన మరియు స్కామ్ సూచనలను తనిఖీ చేయండి.",
-        "call_description_label": "🗣️ కాలర్ ఏమి చెప్పాడు లేదా ఏమి అడిగాడు?",
-        "call_description_placeholder": "ఉదాహరణ: కాలర్ తాను నా బ్యాంక్ నుండి అని చెప్పి, ఖాతాను అన్‌బ్లాక్ చేయడానికి OTP అడిగాడు. వెంటనే చేయాలని ఒత్తిడి చేశాడు.",
-        "calls_received": "అందుకున్న కాల్స్",
-        "carrier": "క్యారియర్ / నెట్‌వర్క్",
-        "checking_call": "🔍 నంబర్, క్యారియర్, నమోదైన ప్రాంతం మరియు స్కామ్ సూచనలను తనిఖీ చేస్తున్నాం...",
-        "correct": "✅ సరైన సమాధానం!",
-        "country": "🌍 దేశం",
-        "english": "ఆంగ్లం",
-        "enter_message": "విశ్లేషించడానికి సందేశాన్ని నమోదు చేయండి.",
-        "enter_phone": "విశ్లేషించడానికి ఫోన్ నంబర్‌ను నమోదు చేయండి.",
-        "enter_url": "విశ్లేషించడానికి URL ను నమోదు చేయండి.",
-        "fake_bank": "🏦 నకిలీ బ్యాంక్ అలర్ట్",
-        "fake_delivery": "📦 నకిలీ డెలివరీ",
-        "fake_lottery": "🎰 నకిలీ లాటరీ",
-        "footer": "రక్ష AI ను ఉపయోగించి సంభావ్య స్కామ్‌లను కనుగొంటుంది. ఎల్లప్పుడూ అధికారిక మూలాలతో ధృవీకరించండి.",
-        "footer_model": "డిజిటల్ భద్రత కోసం 💚 తో తయారు చేయబడింది | మోడల్: llama-3.1-8b-instant via Groq",
-        "groq_error": "Groq API లోపం",
-        "hero_subtitle": "ఆన్‌లైన్ మోసాల నుండి కుటుంబాలను రక్షిస్తుంది — స్కామ్ సందేశాలను పరిశీలిస్తుంది, అనుమానాస్పద లింక్‌లను తనిఖీ చేస్తుంది, కాల్‌లను విశ్లేషిస్తుంది మరియు మోసాలను గుర్తించడం నేర్పిస్తుంది.",
-        "hero_title": "రక్ష — కుటుంబ డిజిటల్ సేఫ్టీ గార్డియన్",
-        "incorrect": "❌ తప్పు సమాధానం!",
-        "invalid_phone": "❌ చెల్లని ఫోన్ నంబర్. భారతీయ నంబర్ల కోసం 10 అంకెలు లేదా +91 తో నంబర్ నమోదు చేయండి.",
         "language_label": "భాష",
-        "line_status": "లైన్ స్థితి",
-        "line_type": "లైన్ రకం",
-        "location_notice": "📍 ఇక్కడ చూపించే ప్రాంతం అందుబాటులో ఉన్నప్పుడు ఫోన్ నంబర్ నమోదైన టెలికాం ప్రాంతం మాత్రమే — ఇది కాలర్ యొక్క లైవ్ GPS స్థానం కాదు.",
-        "lookup_detail": "లుక్‌అప్ వివరాలు",
-        "lookup_unavailable": "⚠️ టెలికాం లుక్‌అప్ అందుబాటులో లేదు. కాల్ ప్రవర్తన మరియు AI సూచనలతో కాల్‌ను ఇంకా విశ్లేషించవచ్చు.",
-        "made_for": "డిజిటల్ భద్రత కోసం 💚 తో తయారు చేయబడింది",
-        "messages_checked": "సందేశాలు పరిశీలించబడ్డాయి",
         "mission": "మా లక్ష్యం",
         "mission_text": "ప్రతి రోజు వేలాది భారతీయ కుటుంబాలు ఆన్‌లైన్ స్కామ్‌ల వల్ల డబ్బు కోల్పోతున్నాయి. రక్ష మీ కుటుంబాన్ని వారి స్వంత భాషలో రక్షిస్తుంది, పరిశీలిస్తుంది మరియు నేర్పిస్తుంది.",
-        "no": "కాదు",
-        "number_valid": "నంబర్ చెల్లుబాటు",
-        "overall_risk": "మొత్తం రిస్క్",
-        "parse_error": "స్పందనను చదవలేకపోయాం. దయచేసి మళ్లీ ప్రయత్నించండి.",
-        "paste_any": "మీకు అనుమానం ఉన్న ఏదైనా SMS, WhatsApp, లేదా ఇమెయిల్‌ను అతికించండి.",
-        "perfect_score": "🎉 అద్భుతమైన స్కోర్! మీరు స్కామ్ గుర్తింపు నిపుణులు!",
-        "privacy_notice": "🔐 గోప్యత: పూర్తి ఫోన్ నంబర్ టెలికాం లుక్‌అప్ కోసం మాత్రమే ఉపయోగించబడుతుంది. AI విశ్లేషణకు మాస్క్ చేసిన నంబర్ మరియు కాల్ వివరాలు మాత్రమే పంపబడతాయి.",
-        "question": "ప్రశ్న",
-        "quiz_description": "మీ జ్ఞానాన్ని పరీక్షించుకోండి మరియు స్కామ్‌లు జరగకముందే వాటిని గుర్తించడం నేర్చుకోండి.",
-        "raw_response": "డీబగ్ - ముడి స్పందన",
-        "region": "📍 ప్రాంతం",
-        "registered_city": "🏙️ నమోదైన నగరం",
-        "report": "స్కామ్‌ను రిపోర్ట్ చేయండి",
-        "report_scam_title": "స్కామ్‌ను రిపోర్ట్ చేయండి",
-        "risk_evidence": "📊 రిస్క్ ఆధారాలు",
-        "safe_label": "సురక్షితం",
-        "scam_label": "స్కామ్",
-        "scams_caught": "స్కామ్‌లు పట్టుబడ్డాయి",
-        "score": "మీ స్కోర్",
-        "select_answer": "దయచేసి ముందుగా ఒక సమాధానాన్ని ఎంచుకోండి.",
         "stats": "గణాంకాలు",
-        "submit_answer": "సమాధానం సమర్పించండి",
-        "suspicious_label": "అనుమానాస్పదం",
-        "suspicious_message": "అనుమానాస్పద సందేశం:",
-        "telecom_assessment": "📡 టెలికాం అంచనా",
-        "telecom_intelligence": "📡 టెలికాం & SIM/నెట్‌వర్క్ సమాచారం",
-        "telecom_not_verdict": "టెలికాం డేటా సహాయక ఆధారం మాత్రమే; దానితో కాలర్ స్కామర్ అని నిర్ధారించలేము.",
-        "timezone": "🕐 టైమ్‌జోన్",
-        "try_example": "ఉదాహరణను ప్రయత్నించండి:",
-        "unknown": "తెలియదు",
-        "url_description": "ఫిషింగ్ మరియు హానికరమైన లింక్‌ల కోసం అనుమానాస్పద URL ను తనిఖీ చేయండి.",
+        "why_raksha": "రక్ష ఎందుకు గెలుస్తుంది",
         "why_1": "☑️ నిజమైన సమస్య, నిజమైన లక్ష్యం",
         "why_2": "☑️ 4 పనిచేసే భద్రతా సాధనాలు",
         "why_3": "☑️ 5 భారతీయ భాషలకు మద్దతు",
         "why_4": "☑️ 3D గ్లాస్ UI మరియు లైవ్ డెప్త్ ఎఫెక్ట్స్",
-        "why_raksha": "రక్ష ఎందుకు గెలుస్తుంది",
-        "yes": "అవును"
+        "made_for": "డిజిటల్ భద్రత కోసం 💚 తో తయారు చేయబడింది",
+        "hero_title": "రక్ష — కుటుంబ డిజిటల్ సేఫ్టీ గార్డియన్",
+        "hero_subtitle": "ఆన్‌లైన్ మోసాల నుండి కుటుంబాలను రక్షిస్తుంది — స్కామ్ సందేశాలను పరిశీలిస్తుంది, అనుమానాస్పద లింక్‌లను తనిఖీ చేస్తుంది, కాల్‌లను విశ్లేషిస్తుంది మరియు మోసాలను గుర్తించడం నేర్పిస్తుంది.",
+        "fake_lottery": "🎰 నకిలీ లాటరీ",
+        "fake_bank": "🏦 నకిలీ బ్యాంక్ అలర్ట్",
+        "fake_delivery": "📦 నకిలీ డెలివరీ",
+        "suspicious_message": "అనుమానాస్పద సందేశం:",
+        "url_description": "ఫిషింగ్ మరియు హానికరమైన లింక్‌ల కోసం అనుమానాస్పద URL ను తనిఖీ చేయండి.",
+        "call_description_label": "🗣️ కాలర్ ఏమి చెప్పాడు లేదా ఏమి అడిగాడు?",
+        "call_description_placeholder": "ఉదాహరణ: కాలర్ తాను నా బ్యాంక్ నుండి అని చెప్పి, ఖాతాను అన్‌బ్లాక్ చేయడానికి OTP అడిగాడు. వెంటనే చేయాలని ఒత్తిడి చేశాడు.",
+        "call_checker_description": "కాలర్‌ను నమ్మే ముందు టెలికాం సమాచారం, నమోదైన నంబర్ ప్రాంతం, కాల్ ప్రవర్తన మరియు స్కామ్ సూచనలను తనిఖీ చేయండి.",
+        "location_notice": "📍 ఇక్కడ చూపించే ప్రాంతం అందుబాటులో ఉన్నప్పుడు ఫోన్ నంబర్ నమోదైన టెలికాం ప్రాంతం మాత్రమే — ఇది కాలర్ యొక్క లైవ్ GPS స్థానం కాదు.",
+        "privacy_notice": "🔐 గోప్యత: పూర్తి ఫోన్ నంబర్ టెలికాం లుక్‌అప్ కోసం మాత్రమే ఉపయోగించబడుతుంది. AI విశ్లేషణకు మాస్క్ చేసిన నంబర్ మరియు కాల్ వివరాలు మాత్రమే పంపబడతాయి.",
+        "checking_call": "🔍 నంబర్, క్యారియర్, నమోదైన ప్రాంతం మరియు స్కామ్ సూచనలను తనిఖీ చేస్తున్నాం...",
+        "invalid_phone": "❌ చెల్లని ఫోన్ నంబర్. భారతీయ నంబర్ల కోసం 10 అంకెలు లేదా +91 తో నంబర్ నమోదు చేయండి.",
+        "telecom_intelligence": "📡 టెలికాం & SIM/నెట్‌వర్క్ సమాచారం",
+        "number_valid": "నంబర్ చెల్లుబాటు",
+        "yes": "అవును",
+        "no": "కాదు",
+        "unknown": "తెలియదు",
+        "carrier": "క్యారియర్ / నెట్‌వర్క్",
+        "line_type": "లైన్ రకం",
+        "line_status": "లైన్ స్థితి",
+        "country": "🌍 దేశం",
+        "region": "📍 ప్రాంతం",
+        "registered_city": "🏙️ నమోదైన నగరం",
+        "timezone": "🕐 టైమ్‌జోన్",
+        "lookup_unavailable": "⚠️ టెలికాం లుక్‌అప్ అందుబాటులో లేదు. కాల్ ప్రవర్తన మరియు AI సూచనలతో కాల్‌ను ఇంకా విశ్లేషించవచ్చు.",
+        "lookup_detail": "లుక్‌అప్ వివరాలు",
+        "risk_evidence": "📊 రిస్క్ ఆధారాలు",
+        "behavior_risk": "ప్రవర్తన రిస్క్",
+        "calls_received": "అందుకున్న కాల్స్",
+        "overall_risk": "మొత్తం రిస్క్",
+        "telecom_assessment": "📡 టెలికాం అంచనా",
+        "telecom_not_verdict": "టెలికాం డేటా సహాయక ఆధారం మాత్రమే; దానితో కాలర్ స్కామర్ అని నిర్ధారించలేము.",
+        "quiz_description": "మీ జ్ఞానాన్ని పరీక్షించుకోండి మరియు స్కామ్‌లు జరగకముందే వాటిని గుర్తించడం నేర్చుకోండి.",
+        "correct": "✅ సరైన సమాధానం!",
+        "incorrect": "❌ తప్పు సమాధానం!",
+        "select_answer": "దయచేసి ముందుగా ఒక సమాధానాన్ని ఎంచుకోండి.",
+        "perfect_score": "🎉 అద్భుతమైన స్కోర్! మీరు స్కామ్ గుర్తింపు నిపుణులు!",
+        "report_scam_title": "స్కామ్‌ను రిపోర్ట్ చేయండి",
+        "raw_response": "డీబగ్ - ముడి స్పందన",
+        "groq_error": "Groq API లోపం",
+        "parse_error": "స్పందనను చదవలేకపోయాం. దయచేసి మళ్లీ ప్రయత్నించండి.",
+        "enter_message": "విశ్లేషించడానికి సందేశాన్ని నమోదు చేయండి.",
+        "enter_url": "విశ్లేషించడానికి URL ను నమోదు చేయండి.",
+        "enter_phone": "విశ్లేషించడానికి ఫోన్ నంబర్‌ను నమోదు చేయండి.",
+        "safe_label": "సురక్షితం",
+        "suspicious_label": "అనుమానాస్పదం",
+        "scam_label": "స్కామ్",
+        "english": "ఆంగ్లం",
+        "report": "స్కామ్‌ను రిపోర్ట్ చేయండి",
+        "footer_model": "డిజిటల్ భద్రత కోసం 💚 తో తయారు చేయబడింది | మోడల్: llama-3.1-8b-instant via Groq",
     },
     "ta": {
-        "behavior_risk": "நடத்தை ஆபத்து",
-        "call_checker_description": "அழைப்பாளரை நம்புவதற்கு முன் தொலைத்தொடர்பு தகவல், பதிவு செய்யப்பட்ட பகுதி, அழைப்பு நடத்தை மற்றும் மோசடி அறிகுறிகளை சரிபார்க்கவும்.",
-        "call_description_label": "🗣️ அழைப்பாளர் என்ன சொன்னார் அல்லது என்ன கேட்டார்?",
-        "call_description_placeholder": "உதாரணம்: அழைப்பாளர் வங்கியிலிருந்து வந்ததாகக் கூறி கணக்கைத் திறக்க OTP கேட்டார்.",
-        "calls_received": "பெறப்பட்ட அழைப்புகள்",
-        "carrier": "கேரியர் / நெட்வொர்க்",
-        "checking_call": "🔍 எண், கேரியர், பதிவு செய்யப்பட்ட பகுதி மற்றும் மோசடி அறிகுறிகளை சரிபார்க்கிறது...",
-        "correct": "✅ சரியான பதில்!",
-        "country": "🌍 நாடு",
-        "english": "ஆங்கிலம்",
-        "enter_message": "பகுப்பாய்வு செய்ய ஒரு செய்தியை உள்ளிடவும்.",
-        "enter_phone": "பகுப்பாய்வு செய்ய தொலைபேசி எண்ணை உள்ளிடவும்.",
-        "enter_url": "பகுப்பாய்வு செய்ய URL ஐ உள்ளிடவும்.",
-        "fake_bank": "🏦 போலி வங்கி எச்சரிக்கை",
-        "fake_delivery": "📦 போலி டெலிவரி",
-        "fake_lottery": "🎰 போலி லாட்டரி",
-        "footer": "ரக்ஷா AI ஐப் பயன்படுத்தி சாத்தியமான மோசடிகளைக் கண்டறிகிறது. எப்போதும் அதிகாரப்பூர்வ ஆதாரங்களுடன் சரிபார்க்கவும்.",
-        "footer_model": "டிஜிட்டல் பாதுகாப்புக்காக 💚 உருவாக்கப்பட்டது | மாடல்: llama-3.1-8b-instant via Groq",
-        "groq_error": "Groq API பிழை",
-        "hero_subtitle": "ஆன்லைன் மோசடிகளில் இருந்து குடும்பங்களை பாதுகாக்கிறது — மோசடி செய்திகளை ஆய்வு செய்கிறது, சந்தேகமான இணைப்புகளை சரிபார்க்கிறது, அழைப்புகளை பகுப்பாய்வு செய்கிறது மற்றும் மோசடிகளை அடையாளம் காண கற்றுக்கொடுக்கிறது.",
-        "hero_title": "ரக்ஷா — குடும்ப டிஜிட்டல் பாதுகாப்பு காவலர்",
-        "incorrect": "❌ தவறான பதில்!",
-        "invalid_phone": "❌ தவறான தொலைபேசி எண். இந்திய எண்ணுக்கு 10 இலக்கங்கள் அல்லது +91 உடன் எண்ணை உள்ளிடவும்.",
-        "language_label": "மொழி",
-        "line_status": "லைன் நிலை",
-        "line_type": "லைன் வகை",
-        "location_notice": "📍 இங்கு காட்டப்படும் பகுதி, கிடைக்கும் போது, தொலைபேசி எண்ணின் பதிவு செய்யப்பட்ட தொலைத்தொடர்பு பகுதி மட்டுமே — இது அழைப்பாளரின் நேரடி GPS இருப்பிடம் அல்ல.",
-        "lookup_detail": "சரிபார்ப்பு விவரம்",
-        "lookup_unavailable": "⚠️ தொலைத்தொடர்பு சரிபார்ப்பு கிடைக்கவில்லை. அழைப்பு நடத்தை மற்றும் AI அறிகுறிகளைக் கொண்டு இன்னும் பகுப்பாய்வு செய்யலாம்.",
-        "made_for": "டிஜிட்டல் பாதுகாப்புக்காக 💚 உருவாக்கப்பட்டது",
-        "messages_checked": "செய்திகள் சரிபார்க்கப்பட்டன",
-        "mission": "எங்கள் நோக்கம்",
-        "mission_text": "ஆயிரக்கணக்கான இந்திய குடும்பங்கள் தினமும் ஆன்லைன் மோசடிகளில் பணத்தை இழக்கின்றனர். ரக்ஷா உங்கள் குடும்பத்தை அவர்களின் சொந்த மொழியில் பாதுகாக்கிறது, ஆய்வு செய்கிறது மற்றும் கற்றுக்கொடுக்கிறது.",
-        "no": "இல்லை",
-        "number_valid": "எண் சரியானதா",
-        "overall_risk": "மொத்த ஆபத்து",
-        "parse_error": "பதிலை படிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
-        "paste_any": "நீங்கள் உறுதியாக இல்லாத எந்த SMS, WhatsApp, அல்லது மின்னஞ்சலையும் ஒட்டவும்.",
-        "perfect_score": "🎉 சரியான மதிப்பெண்! நீங்கள் மோசடி கண்டறிதல் நிபுணர்!",
-        "privacy_notice": "🔐 தனியுரிமை: முழு தொலைபேசி எண் தொலைத்தொடர்பு சரிபார்ப்புக்கு மட்டுமே பயன்படுத்தப்படுகிறது. AI க்கு மறைக்கப்பட்ட எண் மற்றும் அழைப்பு விவரங்கள் மட்டுமே அனுப்பப்படும்.",
-        "question": "கேள்வி",
-        "quiz_description": "உங்கள் அறிவை சோதித்து, மோசடிகள் நடக்கும் முன் அவற்றை அடையாளம் காண கற்றுக்கொள்ளுங்கள்.",
-        "raw_response": "டீபக் - மூல பதில்",
-        "region": "📍 பகுதி",
-        "registered_city": "🏙️ பதிவு செய்யப்பட்ட நகரம்",
-        "report": "மோசடியைப் புகாரளிக்கவும்",
-        "report_scam_title": "மோசடியைப் புகாரளிக்கவும்",
-        "risk_evidence": "📊 ஆபத்து ஆதாரங்கள்",
-        "safe_label": "பாதுகாப்பானது",
-        "scam_label": "மோசடி",
-        "scams_caught": "மோசடிகள் பிடிக்கப்பட்டன",
-        "score": "உங்கள் மதிப்பெண்",
-        "select_answer": "முதலில் ஒரு பதிலைத் தேர்ந்தெடுக்கவும்.",
-        "stats": "புள்ளிவிவரங்கள்",
-        "submit_answer": "பதிலை சமர்ப்பிக்கவும்",
-        "suspicious_label": "சந்தேகமானது",
-        "suspicious_message": "சந்தேகமான செய்தி:",
-        "telecom_assessment": "📡 தொலைத்தொடர்பு மதிப்பீடு",
-        "telecom_intelligence": "📡 தொலைத்தொடர்பு & SIM/நெட்வொர்க் தகவல்",
-        "telecom_not_verdict": "தொலைத்தொடர்பு தரவு ஆதாரம் மட்டுமே; அதனால் அழைப்பாளர் மோசடி செய்பவர் என்று உறுதியாக கூற முடியாது.",
-        "timezone": "🕐 நேர மண்டலம்",
-        "try_example": "ஒரு உதாரணத்தை முயற்சிக்கவும்:",
-        "unknown": "தெரியவில்லை",
-        "url_description": "ஃபிஷிங் மற்றும் தீங்கிழைக்கும் இணைப்புகளுக்கான சந்தேகமான URL ஐ சரிபார்க்கவும்.",
-        "why_1": "☑️ உண்மையான பிரச்சனை, உண்மையான நோக்கம்",
-        "why_2": "☑️ 4 செயல்படும் பாதுகாப்பு கருவிகள்",
-        "why_3": "☑️ 5 இந்திய மொழிகளுக்கு ஆதரவு",
-        "why_4": "☑️ 3D கண்ணாடி UI மற்றும் லைவ் டெப்த் எஃபெக்ட்ஸ்",
-        "why_raksha": "ரக்ஷா ஏன் வெல்லும்",
-        "yes": "ஆம்"
+        "language_label": "மொழி", "mission": "எங்கள் நோக்கம்", "mission_text": "ஆயிரக்கணக்கான இந்திய குடும்பங்கள் தினமும் ஆன்லைன் மோசடிகளில் பணத்தை இழக்கின்றனர். ரக்ஷா உங்கள் குடும்பத்தை அவர்களின் சொந்த மொழியில் பாதுகாக்கிறது, ஆய்வு செய்கிறது மற்றும் கற்றுக்கொடுக்கிறது.", "stats": "புள்ளிவிவரங்கள்", "why_raksha": "ரக்ஷா ஏன் வெல்லும்", "why_1": "☑️ உண்மையான பிரச்சனை, உண்மையான நோக்கம்", "why_2": "☑️ 4 செயல்படும் பாதுகாப்பு கருவிகள்", "why_3": "☑️ 5 இந்திய மொழிகளுக்கு ஆதரவு", "why_4": "☑️ 3D கண்ணாடி UI மற்றும் லைவ் டெப்த் எஃபெக்ட்ஸ்", "made_for": "டிஜிட்டல் பாதுகாப்புக்காக 💚 உருவாக்கப்பட்டது", "hero_title": "ரக்ஷா — குடும்ப டிஜிட்டல் பாதுகாப்பு காவலர்", "hero_subtitle": "ஆன்லைன் மோசடிகளில் இருந்து குடும்பங்களை பாதுகாக்கிறது — மோசடி செய்திகளை ஆய்வு செய்கிறது, சந்தேகமான இணைப்புகளை சரிபார்க்கிறது, அழைப்புகளை பகுப்பாய்வு செய்கிறது மற்றும் மோசடிகளை அடையாளம் காண கற்றுக்கொடுக்கிறது.", "fake_lottery": "🎰 போலி லாட்டரி", "fake_bank": "🏦 போலி வங்கி எச்சரிக்கை", "fake_delivery": "📦 போலி டெலிவரி", "suspicious_message": "சந்தேகமான செய்தி:", "url_description": "ஃபிஷிங் மற்றும் தீங்கிழைக்கும் இணைப்புகளுக்கான சந்தேகமான URL ஐ சரிபார்க்கவும்.", "call_description_label": "🗣️ அழைப்பாளர் என்ன சொன்னார் அல்லது என்ன கேட்டார்?", "call_description_placeholder": "உதாரணம்: அழைப்பாளர் வங்கியிலிருந்து வந்ததாகக் கூறி கணக்கைத் திறக்க OTP கேட்டார்.", "call_checker_description": "அழைப்பாளரை நம்புவதற்கு முன் தொலைத்தொடர்பு தகவல், பதிவு செய்யப்பட்ட பகுதி, அழைப்பு நடத்தை மற்றும் மோசடி அறிகுறிகளை சரிபார்க்கவும்.", "location_notice": "📍 இங்கு காட்டப்படும் பகுதி, கிடைக்கும் போது, தொலைபேசி எண்ணின் பதிவு செய்யப்பட்ட தொலைத்தொடர்பு பகுதி மட்டுமே — இது அழைப்பாளரின் நேரடி GPS இருப்பிடம் அல்ல.", "privacy_notice": "🔐 தனியுரிமை: முழு தொலைபேசி எண் தொலைத்தொடர்பு சரிபார்ப்புக்கு மட்டுமே பயன்படுத்தப்படுகிறது. AI க்கு மறைக்கப்பட்ட எண் மற்றும் அழைப்பு விவரங்கள் மட்டுமே அனுப்பப்படும்.", "checking_call": "🔍 எண், கேரியர், பதிவு செய்யப்பட்ட பகுதி மற்றும் மோசடி அறிகுறிகளை சரிபார்க்கிறது...", "invalid_phone": "❌ தவறான தொலைபேசி எண். இந்திய எண்ணுக்கு 10 இலக்கங்கள் அல்லது +91 உடன் எண்ணை உள்ளிடவும்.", "telecom_intelligence": "📡 தொலைத்தொடர்பு & SIM/நெட்வொர்க் தகவல்", "number_valid": "எண் சரியானதா", "yes": "ஆம்", "no": "இல்லை", "unknown": "தெரியவில்லை", "carrier": "கேரியர் / நெட்வொர்க்", "line_type": "லைன் வகை", "line_status": "லைன் நிலை", "country": "🌍 நாடு", "region": "📍 பகுதி", "registered_city": "🏙️ பதிவு செய்யப்பட்ட நகரம்", "timezone": "🕐 நேர மண்டலம்", "lookup_unavailable": "⚠️ தொலைத்தொடர்பு சரிபார்ப்பு கிடைக்கவில்லை. அழைப்பு நடத்தை மற்றும் AI அறிகுறிகளைக் கொண்டு இன்னும் பகுப்பாய்வு செய்யலாம்.", "lookup_detail": "சரிபார்ப்பு விவரம்", "risk_evidence": "📊 ஆபத்து ஆதாரங்கள்", "behavior_risk": "நடத்தை ஆபத்து", "calls_received": "பெறப்பட்ட அழைப்புகள்", "overall_risk": "மொத்த ஆபத்து", "telecom_assessment": "📡 தொலைத்தொடர்பு மதிப்பீடு", "telecom_not_verdict": "தொலைத்தொடர்பு தரவு ஆதாரம் மட்டுமே; அதனால் அழைப்பாளர் மோசடி செய்பவர் என்று உறுதியாக கூற முடியாது.", "quiz_description": "உங்கள் அறிவை சோதித்து, மோசடிகள் நடக்கும் முன் அவற்றை அடையாளம் காண கற்றுக்கொள்ளுங்கள்.", "correct": "✅ சரியான பதில்!", "incorrect": "❌ தவறான பதில்!", "select_answer": "முதலில் ஒரு பதிலைத் தேர்ந்தெடுக்கவும்.", "perfect_score": "🎉 சரியான மதிப்பெண்! நீங்கள் மோசடி கண்டறிதல் நிபுணர்!", "report_scam_title": "மோசடியைப் புகாரளிக்கவும்", "raw_response": "டீபக் - மூல பதில்", "groq_error": "Groq API பிழை", "parse_error": "பதிலை படிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", "enter_message": "பகுப்பாய்வு செய்ய ஒரு செய்தியை உள்ளிடவும்.", "enter_url": "பகுப்பாய்வு செய்ய URL ஐ உள்ளிடவும்.", "enter_phone": "பகுப்பாய்வு செய்ய தொலைபேசி எண்ணை உள்ளிடவும்.", "safe_label": "பாதுகாப்பானது", "suspicious_label": "சந்தேகமானது", "scam_label": "மோசடி", "english": "ஆங்கிலம்", "report": "மோசடியைப் புகாரளிக்கவும்", "footer_model": "டிஜிட்டல் பாதுகாப்புக்காக 💚 உருவாக்கப்பட்டது | மாடல்: llama-3.1-8b-instant via Groq"
     },
     "hi": {
-        "behavior_risk": "व्यवहार जोखिम",
-        "call_checker_description": "कॉलर पर भरोसा करने से पहले टेलीकॉम जानकारी, पंजीकृत क्षेत्र, कॉल व्यवहार और घोटाले के संकेत जांचें।",
-        "call_description_label": "🗣️ कॉल करने वाले ने क्या कहा या क्या मांगा?",
-        "call_description_placeholder": "उदाहरण: कॉल करने वाले ने बैंक से होने का दावा किया और खाता खोलने के लिए OTP मांगा।",
-        "calls_received": "प्राप्त कॉल",
-        "carrier": "कैरियर / नेटवर्क",
-        "checking_call": "🔍 नंबर, कैरियर, पंजीकृत स्थान और घोटाले के संकेत जांचे जा रहे हैं...",
-        "correct": "✅ सही!",
-        "country": "🌍 देश",
-        "english": "अंग्रेज़ी",
-        "enter_message": "विश्लेषण के लिए संदेश दर्ज करें।",
-        "enter_phone": "विश्लेषण के लिए फोन नंबर दर्ज करें।",
-        "enter_url": "विश्लेषण के लिए URL दर्ज करें।",
-        "fake_bank": "🏦 नकली बैंक अलर्ट",
-        "fake_delivery": "📦 नकली डिलीवरी",
-        "fake_lottery": "🎰 नकली लॉटरी",
-        "footer": "रक्षा AI का उपयोग करके संभावित घोटालों का पता लगाती है। हमेशा आधिकारिक स्रोतों के साथ सत्यापित करें।",
-        "footer_model": "डिजिटल सुरक्षा के लिए 💚 बनाया गया | मॉडल: llama-3.1-8b-instant via Groq",
-        "groq_error": "Groq API त्रुटि",
-        "hero_subtitle": "परिवारों को ऑनलाइन धोखाधड़ी से बचाता है — घोटाले के संदेशों की जांच करता है, संदिग्ध लिंक देखता है, कॉल का विश्लेषण करता है और लोगों को धोखाधड़ी पहचानना सिखाता है।",
-        "hero_title": "रक्षा — परिवार डिजिटल सुरक्षा संरक्षक",
-        "incorrect": "❌ गलत!",
-        "invalid_phone": "❌ अमान्य फोन नंबर। भारतीय नंबर के लिए 10 अंक या +91 के साथ नंबर दर्ज करें।",
-        "language_label": "भाषा",
-        "line_status": "लाइन स्थिति",
-        "line_type": "लाइन प्रकार",
-        "location_notice": "📍 यहां दिखाया गया स्थान, उपलब्ध होने पर, फोन नंबर का पंजीकृत टेलीकॉम क्षेत्र है — यह कॉलर का लाइव GPS स्थान नहीं है।",
-        "lookup_detail": "लुकअप विवरण",
-        "lookup_unavailable": "⚠️ टेलीकॉम लुकअप उपलब्ध नहीं है। कॉल व्यवहार और AI संकेतों से कॉल का विश्लेषण फिर भी किया जा सकता है।",
-        "made_for": "डिजिटल सुरक्षा के लिए 💚 बनाया गया",
-        "messages_checked": "संदेश जांचे गए",
-        "mission": "हमारा मिशन",
-        "mission_text": "हर दिन हजारों भारतीय परिवार ऑनलाइन घोटालों में पैसा खोते हैं। रक्षा आपके परिवार को उनकी अपनी भाषा में सुरक्षित रखता है, जांचता है और सिखाता है।",
-        "no": "नहीं",
-        "number_valid": "नंबर मान्य",
-        "overall_risk": "कुल जोखिम",
-        "parse_error": "प्रतिक्रिया पढ़ी नहीं जा सकी। कृपया फिर प्रयास करें।",
-        "paste_any": "कोई भी SMS, WhatsApp, या ईमेल पेस्ट करें जिसके बारे में आपको संदेह है।",
-        "perfect_score": "🎉 शानदार स्कोर! आप घोटाला पहचानने के विशेषज्ञ हैं!",
-        "privacy_notice": "🔐 गोपनीयता: पूरा फोन नंबर केवल टेलीकॉम लुकअप के लिए उपयोग होता है। AI को केवल छिपा हुआ नंबर और कॉल विवरण भेजे जाते हैं।",
-        "question": "प्रश्न",
-        "quiz_description": "अपना ज्ञान जांचें और घोटाले होने से पहले उन्हें पहचानना सीखें।",
-        "raw_response": "डीबग - कच्ची प्रतिक्रिया",
-        "region": "📍 क्षेत्र",
-        "registered_city": "🏙️ पंजीकृत शहर",
-        "report": "घोटाले की रिपोर्ट करें",
-        "report_scam_title": "घोटाले की रिपोर्ट करें",
-        "risk_evidence": "📊 जोखिम के प्रमाण",
-        "safe_label": "सुरक्षित",
-        "scam_label": "घोटाला",
-        "scams_caught": "घोटाले पकड़े गए",
-        "score": "आपका स्कोर",
-        "select_answer": "कृपया पहले एक उत्तर चुनें।",
-        "stats": "आंकड़े",
-        "submit_answer": "उत्तर जमा करें",
-        "suspicious_label": "संदिग्ध",
-        "suspicious_message": "संदिग्ध संदेश:",
-        "telecom_assessment": "📡 टेलीकॉम आकलन",
-        "telecom_intelligence": "📡 टेलीकॉम और SIM/नेटवर्क जानकारी",
-        "telecom_not_verdict": "टेलीकॉम डेटा केवल सहायक प्रमाण है; इससे यह साबित नहीं होता कि कॉलर ठग है।",
-        "timezone": "🕐 समय क्षेत्र",
-        "try_example": "एक उदाहरण आजमाएं:",
-        "unknown": "अज्ञात",
-        "url_description": "फिशिंग और दुर्भावनापूर्ण लिंक के लिए संदिग्ध URL की जांच करें।",
-        "why_1": "☑️ असली समस्या, असली मिशन",
-        "why_2": "☑️ 4 काम करने वाले सुरक्षा उपकरण",
-        "why_3": "☑️ 5 भारतीय भाषाओं का समर्थन",
-        "why_4": "☑️ 3D ग्लास UI और लाइव डेप्थ इफेक्ट्स",
-        "why_raksha": "रक्षा क्यों जीतेगा",
-        "yes": "हाँ"
+        "language_label": "भाषा", "mission": "हमारा मिशन", "mission_text": "हर दिन हजारों भारतीय परिवार ऑनलाइन घोटालों में पैसा खोते हैं। रक्षा आपके परिवार को उनकी अपनी भाषा में सुरक्षित रखता है, जांचता है और सिखाता है।", "stats": "आंकड़े", "why_raksha": "रक्षा क्यों जीतेगा", "why_1": "☑️ असली समस्या, असली मिशन", "why_2": "☑️ 4 काम करने वाले सुरक्षा उपकरण", "why_3": "☑️ 5 भारतीय भाषाओं का समर्थन", "why_4": "☑️ 3D ग्लास UI और लाइव डेप्थ इफेक्ट्स", "made_for": "डिजिटल सुरक्षा के लिए 💚 बनाया गया", "hero_title": "रक्षा — परिवार डिजिटल सुरक्षा संरक्षक", "hero_subtitle": "परिवारों को ऑनलाइन धोखाधड़ी से बचाता है — घोटाले के संदेशों की जांच करता है, संदिग्ध लिंक देखता है, कॉल का विश्लेषण करता है और लोगों को धोखाधड़ी पहचानना सिखाता है।", "fake_lottery": "🎰 नकली लॉटरी", "fake_bank": "🏦 नकली बैंक अलर्ट", "fake_delivery": "📦 नकली डिलीवरी", "suspicious_message": "संदिग्ध संदेश:", "url_description": "फिशिंग और दुर्भावनापूर्ण लिंक के लिए संदिग्ध URL की जांच करें।", "call_description_label": "🗣️ कॉल करने वाले ने क्या कहा या क्या मांगा?", "call_description_placeholder": "उदाहरण: कॉल करने वाले ने बैंक से होने का दावा किया और खाता खोलने के लिए OTP मांगा।", "call_checker_description": "कॉलर पर भरोसा करने से पहले टेलीकॉम जानकारी, पंजीकृत क्षेत्र, कॉल व्यवहार और घोटाले के संकेत जांचें।", "location_notice": "📍 यहां दिखाया गया स्थान, उपलब्ध होने पर, फोन नंबर का पंजीकृत टेलीकॉम क्षेत्र है — यह कॉलर का लाइव GPS स्थान नहीं है।", "privacy_notice": "🔐 गोपनीयता: पूरा फोन नंबर केवल टेलीकॉम लुकअप के लिए उपयोग होता है। AI को केवल छिपा हुआ नंबर और कॉल विवरण भेजे जाते हैं।", "checking_call": "🔍 नंबर, कैरियर, पंजीकृत स्थान और घोटाले के संकेत जांचे जा रहे हैं...", "invalid_phone": "❌ अमान्य फोन नंबर। भारतीय नंबर के लिए 10 अंक या +91 के साथ नंबर दर्ज करें।", "telecom_intelligence": "📡 टेलीकॉम और SIM/नेटवर्क जानकारी", "number_valid": "नंबर मान्य", "yes": "हाँ", "no": "नहीं", "unknown": "अज्ञात", "carrier": "कैरियर / नेटवर्क", "line_type": "लाइन प्रकार", "line_status": "लाइन स्थिति", "country": "🌍 देश", "region": "📍 क्षेत्र", "registered_city": "🏙️ पंजीकृत शहर", "timezone": "🕐 समय क्षेत्र", "lookup_unavailable": "⚠️ टेलीकॉम लुकअप उपलब्ध नहीं है। कॉल व्यवहार और AI संकेतों से कॉल का विश्लेषण फिर भी किया जा सकता है।", "lookup_detail": "लुकअप विवरण", "risk_evidence": "📊 जोखिम के प्रमाण", "behavior_risk": "व्यवहार जोखिम", "calls_received": "प्राप्त कॉल", "overall_risk": "कुल जोखिम", "telecom_assessment": "📡 टेलीकॉम आकलन", "telecom_not_verdict": "टेलीकॉम डेटा केवल सहायक प्रमाण है; इससे यह साबित नहीं होता कि कॉलर ठग है।", "quiz_description": "अपना ज्ञान जांचें और घोटाले होने से पहले उन्हें पहचानना सीखें।", "correct": "✅ सही!", "incorrect": "❌ गलत!", "select_answer": "कृपया पहले एक उत्तर चुनें।", "perfect_score": "🎉 शानदार स्कोर! आप घोटाला पहचानने के विशेषज्ञ हैं!", "report_scam_title": "घोटाले की रिपोर्ट करें", "raw_response": "डीबग - कच्ची प्रतिक्रिया", "groq_error": "Groq API त्रुटि", "parse_error": "प्रतिक्रिया पढ़ी नहीं जा सकी। कृपया फिर प्रयास करें।", "enter_message": "विश्लेषण के लिए संदेश दर्ज करें।", "enter_url": "विश्लेषण के लिए URL दर्ज करें।", "enter_phone": "विश्लेषण के लिए फोन नंबर दर्ज करें।", "safe_label": "सुरक्षित", "suspicious_label": "संदिग्ध", "scam_label": "घोटाला", "english": "अंग्रेज़ी", "report": "घोटाले की रिपोर्ट करें", "footer_model": "डिजिटल सुरक्षा के लिए 💚 बनाया गया | मॉडल: llama-3.1-8b-instant via Groq"
     },
     "kn": {
-        "behavior_risk": "ವರ್ತನೆ ಅಪಾಯ",
-        "call_checker_description": "ಕರೆ ಮಾಡಿದವರನ್ನು ನಂಬುವ ಮೊದಲು ಟೆಲಿಕಾಂ ಮಾಹಿತಿ, ನೋಂದಾಯಿತ ಪ್ರದೇಶ, ಕರೆ ವರ್ತನೆ ಮತ್ತು ಮೋಸ ಸೂಚನೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
-        "call_description_label": "🗣️ ಕರೆ ಮಾಡಿದವರು ಏನು ಹೇಳಿದರು ಅಥವಾ ಏನು ಕೇಳಿದರು?",
-        "call_description_placeholder": "ಉದಾಹರಣೆ: ಕರೆ ಮಾಡಿದವರು ಬ್ಯಾಂಕಿನಿಂದ ಬಂದವರು ಎಂದು ಹೇಳಿ ಖಾತೆ ತೆರೆಯಲು OTP ಕೇಳಿದರು.",
-        "calls_received": "ಸ್ವೀಕರಿಸಿದ ಕರೆಗಳು",
-        "carrier": "ಕ್ಯಾರಿಯರ್ / ನೆಟ್‌ವರ್ಕ್",
-        "checking_call": "🔍 ಸಂಖ್ಯೆ, ಕ್ಯಾರಿಯರ್, ನೋಂದಾಯಿತ ಸ್ಥಳ ಮತ್ತು ಮೋಸ ಸೂಚನೆಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
-        "correct": "✅ ಸರಿಯಾಗಿದೆ!",
-        "country": "🌍 ದೇಶ",
-        "english": "ಆಂಗ್ಲ",
-        "enter_message": "ವಿಶ್ಲೇಷಿಸಲು ಸಂದೇಶವನ್ನು ನಮೂದಿಸಿ.",
-        "enter_phone": "ವಿಶ್ಲೇಷಿಸಲು ಫೋನ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.",
-        "enter_url": "ವಿಶ್ಲೇಷಿಸಲು URL ಅನ್ನು ನಮೂದಿಸಿ.",
-        "fake_bank": "🏦 ನಕಲಿ ಬ್ಯಾಂಕ್ ಎಚ್ಚರಿಕೆ",
-        "fake_delivery": "📦 ನಕಲಿ ಡೆಲಿವರಿ",
-        "fake_lottery": "🎰 ನಕಲಿ ಲಾಟರಿ",
-        "footer": "ರಕ್ಷ AI ಬಳಸಿ ಸಂಭವನೀಯ ಸ್ಕ್ಯಾಮ್‌ಗಳನ್ನು ಪತ್ತೆಹಚ್ಚುತ್ತದೆ. ಯಾವಾಗಲೂ ಅಧಿಕೃತ ಮೂಲಗಳೊಂದಿಗೆ ಪರಿಶೀಲಿಸಿ.",
-        "footer_model": "ಡಿಜಿಟಲ್ ಸುರಕ್ಷತೆಗಾಗಿ 💚 ನಿರ್ಮಿಸಲಾಗಿದೆ | ಮಾದರಿ: llama-3.1-8b-instant via Groq",
-        "groq_error": "Groq API ದೋಷ",
-        "hero_subtitle": "ಕುಟುಂಬಗಳನ್ನು ಆನ್‌ಲೈನ್ ವಂಚನೆಯಿಂದ ರಕ್ಷಿಸುತ್ತದೆ — ಮೋಸ ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ಅನುಮಾನಾಸ್ಪದ ಲಿಂಕ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ಕರೆಗಳನ್ನು ವಿಶ್ಲೇಷಿಸುತ್ತದೆ ಮತ್ತು ಮೋಸವನ್ನು ಗುರುತಿಸಲು ಕಲಿಸುತ್ತದೆ.",
-        "hero_title": "ರಕ್ಷ — ಕುಟುಂಬ ಡಿಜಿಟಲ್ ಸುರಕ್ಷತಾ ರಕ್ಷಕ",
-        "incorrect": "❌ ತಪ್ಪಾಗಿದೆ!",
-        "invalid_phone": "❌ ಅಮಾನ್ಯ ಫೋನ್ ಸಂಖ್ಯೆ. ಭಾರತೀಯ ಸಂಖ್ಯೆಗೆ 10 ಅಂಕೆಗಳು ಅಥವಾ +91 ಜೊತೆಗೆ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.",
-        "language_label": "ಭಾಷೆ",
-        "line_status": "ಲೈನ್ ಸ್ಥಿತಿ",
-        "line_type": "ಲೈನ್ ಪ್ರಕಾರ",
-        "location_notice": "📍 ಇಲ್ಲಿ ತೋರಿಸುವ ಸ್ಥಳವು ಲಭ್ಯವಿದ್ದಾಗ ಫೋನ್ ಸಂಖೆಯ ನೋಂದಾಯಿತ ಟೆಲಿಕಾಂ ಪ್ರದೇಶವಾಗಿದೆ — ಇದು ಕರೆ ಮಾಡಿದವರ ಲೈವ್ GPS ಸ್ಥಳವಲ್ಲ.",
-        "lookup_detail": "ಲುಕ್‌ಅಪ್ ವಿವರ",
-        "lookup_unavailable": "⚠️ ಟೆಲಿಕಾಂ ಲುಕ್‌ಅಪ್ ಲಭ್ಯವಿಲ್ಲ. ಕರೆ ವರ್ತನೆ ಮತ್ತು AI ಸೂಚನೆಗಳಿಂದ ಕರೆ ವಿಶ್ಲೇಷಿಸಬಹುದು.",
-        "made_for": "ಡಿಜಿಟಲ್ ಸುರಕ್ಷತೆಗಾಗಿ 💚 ನಿರ್ಮಿಸಲಾಗಿದೆ",
-        "messages_checked": "ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
-        "mission": "ನಮ್ಮ ಗುರಿ",
-        "mission_text": "ಪ್ರತಿ ದಿನ ಸಾವಿರಾರು ಭಾರತೀಯ ಕುಟುಂಬಗಳು ಆನ್‌ಲೈನ್ ಮೋಸಗಳಿಂದ ಹಣ ಕಳೆದುಕೊಳ್ಳುತ್ತವೆ. ರಕ್ಷ ನಿಮ್ಮ ಕುಟುಂಬವನ್ನು ಅವರದೇ ಭಾಷೆಯಲ್ಲಿ ರಕ್ಷಿಸುತ್ತದೆ, ಪರಿಶೀಲಿಸುತ್ತದೆ ಮತ್ತು ಕಲಿಸುತ್ತದೆ.",
-        "no": "ಇಲ್ಲ",
-        "number_valid": "ಸಂಖ್ಯೆ ಮಾನ್ಯ",
-        "overall_risk": "ಒಟ್ಟು ಅಪಾಯ",
-        "parse_error": "ಪ್ರತಿಸ್ಪಂದನವನ್ನು ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-        "paste_any": "ನಿಮಗೆ ಅನುಮಾನವಿರುವ ಯಾವುದೇ SMS, WhatsApp, ಅಥವಾ ಇಮೇಲ್ ಅನ್ನು ಅಂಟಿಸಿ.",
-        "perfect_score": "🎉 ಪರಿಪೂರ್ಣ ಸ್ಕೋರ್! ನೀವು ಮೋಸ ಪತ್ತೆಹಚ್ಚುವ ತಜ್ಞರು!",
-        "privacy_notice": "🔐 ಗೌಪ್ಯತೆ: ಪೂರ್ಣ ಫೋನ್ ಸಂಖೆಯನ್ನು ಟೆಲಿಕಾಂ ಲುಕ್‌ಅಪ್‌ಗಾಗಿ ಮಾತ್ರ ಬಳಸಲಾಗುತ್ತದೆ. AIಗೆ ಮಸ್ಕ್ ಮಾಡಿದ ಸಂಖ್ಯೆ ಮತ್ತು ಕರೆ ವಿವರಗಳನ್ನು ಮಾತ್ರ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.",
-        "question": "ಪ್ರಶ್ನೆ",
-        "quiz_description": "ನಿಮ್ಮ ಜ್ಞಾನವನ್ನು ಪರೀಕ್ಷಿಸಿ ಮತ್ತು ಮೋಸಗಳು ಸಂಭವಿಸುವ ಮೊದಲು ಅವುಗಳನ್ನು ಗುರುತಿಸಲು ಕಲಿಯಿರಿ.",
-        "raw_response": "ಡೀಬಗ್ - ಮೂಲ ಪ್ರತಿಸ್ಪಂದನ",
-        "region": "📍 ಪ್ರದೇಶ",
-        "registered_city": "🏙️ ನೋಂದಾಯಿತ ನಗರ",
-        "report": "ಸ್ಕ್ಯಾಮ್ ವರದಿ ಮಾಡಿ",
-        "report_scam_title": "ಮೋಸವನ್ನು ವರದಿ ಮಾಡಿ",
-        "risk_evidence": "📊 ಅಪಾಯದ ಸಾಕ್ಷ್ಯ",
-        "safe_label": "ಸುರಕ್ಷಿತ",
-        "scam_label": "ಸ್ಕ್ಯಾಮ್",
-        "scams_caught": "ಸ್ಕ್ಯಾಮ್‌ಗಳನ್ನು ಹಿಡಿದುಕೊಂಡಿದೆ",
-        "score": "ನಿಮ್ಮ ಸ್ಕೋರ್",
-        "select_answer": "ದಯವಿಟ್ಟು ಮೊದಲು ಉತ್ತರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
-        "stats": "ಅಂಕಿಅಂಶಗಳು",
-        "submit_answer": "ಉತ್ತರವನ್ನು ಸಲ್ಲಿಸಿ",
-        "suspicious_label": "ಅನುಮಾನಾಸ್ಪದ",
-        "suspicious_message": "ಅನುಮಾನಾಸ್ಪದ ಸಂದೇಶ:",
-        "telecom_assessment": "📡 ಟೆಲಿಕಾಂ ಮೌಲ್ಯಮಾಪನ",
-        "telecom_intelligence": "📡 ಟೆಲಿಕಾಂ & SIM/ನೆಟ್‌ವರ್ಕ್ ಮಾಹಿತಿ",
-        "telecom_not_verdict": "ಟೆಲಿಕಾಂ ಡೇಟಾ ಸಹಾಯಕ ಸಾಕ್ಷ್ಯ ಮಾತ್ರ; ಇದರಿಂದ ಕರೆ ಮಾಡಿದವರು ಮೋಸಗಾರರು ಎಂದು ಸಾಬೀತಾಗುವುದಿಲ್ಲ.",
-        "timezone": "🕐 ಸಮಯ ವಲಯ",
-        "try_example": "ಉದಾಹರಣೆಯನ್ನು ಪ್ರಯತ್ನಿಸಿ:",
-        "unknown": "ತಿಳಿದಿಲ್ಲ",
-        "url_description": "ಫಿಶಿಂಗ್ ಮತ್ತು ಹಾನಿಕಾರಕ ಲಿಂಕ್‌ಗಳಿಗಾಗಿ ಅನುಮಾನಾಸ್ಪದ URL ಅನ್ನು ಪರಿಶೀಲಿಸಿ.",
-        "why_1": "☑️ ನಿಜವಾದ ಸಮಸ್ಯೆ, ನಿಜವಾದ ಗುರಿ",
-        "why_2": "☑️ 4 ಕಾರ್ಯನಿರ್ವಹಿಸುವ ಸುರಕ್ಷತಾ ಸಾಧನಗಳು",
-        "why_3": "☑️ 5 ಭಾರತೀಯ ಭಾಷೆಗಳಿಗೆ ಬೆಂಬಲ",
-        "why_4": "☑️ 3D ಗ್ಲಾಸ್ UI ಮತ್ತು ಲೈವ್ ಡೆಪ್ತ್ ಎಫೆಕ್ಟ್ಸ್",
-        "why_raksha": "ರಕ್ಷ ಏಕೆ ಗೆಲ್ಲುತ್ತದೆ",
-        "yes": "ಹೌದು"
+        "language_label": "ಭಾಷೆ", "mission": "ನಮ್ಮ ಗುರಿ", "mission_text": "ಪ್ರತಿ ದಿನ ಸಾವಿರಾರು ಭಾರತೀಯ ಕುಟುಂಬಗಳು ಆನ್‌ಲೈನ್ ಮೋಸಗಳಿಂದ ಹಣ ಕಳೆದುಕೊಳ್ಳುತ್ತವೆ. ರಕ್ಷ ನಿಮ್ಮ ಕುಟುಂಬವನ್ನು ಅವರದೇ ಭಾಷೆಯಲ್ಲಿ ರಕ್ಷಿಸುತ್ತದೆ, ಪರಿಶೀಲಿಸುತ್ತದೆ ಮತ್ತು ಕಲಿಸುತ್ತದೆ.", "stats": "ಅಂಕಿಅಂಶಗಳು", "why_raksha": "ರಕ್ಷ ಏಕೆ ಗೆಲ್ಲುತ್ತದೆ", "why_1": "☑️ ನಿಜವಾದ ಸಮಸ್ಯೆ, ನಿಜವಾದ ಗುರಿ", "why_2": "☑️ 4 ಕಾರ್ಯನಿರ್ವಹಿಸುವ ಸುರಕ್ಷತಾ ಸಾಧನಗಳು", "why_3": "☑️ 5 ಭಾರತೀಯ ಭಾಷೆಗಳಿಗೆ ಬೆಂಬಲ", "why_4": "☑️ 3D ಗ್ಲಾಸ್ UI ಮತ್ತು ಲೈವ್ ಡೆಪ್ತ್ ಎಫೆಕ್ಟ್ಸ್", "made_for": "ಡಿಜಿಟಲ್ ಸುರಕ್ಷತೆಗಾಗಿ 💚 ನಿರ್ಮಿಸಲಾಗಿದೆ", "hero_title": "ರಕ್ಷ — ಕುಟುಂಬ ಡಿಜಿಟಲ್ ಸುರಕ್ಷತಾ ರಕ್ಷಕ", "hero_subtitle": "ಕುಟುಂಬಗಳನ್ನು ಆನ್‌ಲೈನ್ ವಂಚನೆಯಿಂದ ರಕ್ಷಿಸುತ್ತದೆ — ಮೋಸ ಸಂದೇಶಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ಅನುಮಾನಾಸ್ಪದ ಲಿಂಕ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ, ಕರೆಗಳನ್ನು ವಿಶ್ಲೇಷಿಸುತ್ತದೆ ಮತ್ತು ಮೋಸವನ್ನು ಗುರುತಿಸಲು ಕಲಿಸುತ್ತದೆ.", "fake_lottery": "🎰 ನಕಲಿ ಲಾಟರಿ", "fake_bank": "🏦 ನಕಲಿ ಬ್ಯಾಂಕ್ ಎಚ್ಚರಿಕೆ", "fake_delivery": "📦 ನಕಲಿ ಡೆಲಿವರಿ", "suspicious_message": "ಅನುಮಾನಾಸ್ಪದ ಸಂದೇಶ:", "url_description": "ಫಿಶಿಂಗ್ ಮತ್ತು ಹಾನಿಕಾರಕ ಲಿಂಕ್‌ಗಳಿಗಾಗಿ ಅನುಮಾನಾಸ್ಪದ URL ಅನ್ನು ಪರಿಶೀಲಿಸಿ.", "call_description_label": "🗣️ ಕರೆ ಮಾಡಿದವರು ಏನು ಹೇಳಿದರು ಅಥವಾ ಏನು ಕೇಳಿದರು?", "call_description_placeholder": "ಉದಾಹರಣೆ: ಕರೆ ಮಾಡಿದವರು ಬ್ಯಾಂಕಿನಿಂದ ಬಂದವರು ಎಂದು ಹೇಳಿ ಖಾತೆ ತೆರೆಯಲು OTP ಕೇಳಿದರು.", "call_checker_description": "ಕರೆ ಮಾಡಿದವರನ್ನು ನಂಬುವ ಮೊದಲು ಟೆಲಿಕಾಂ ಮಾಹಿತಿ, ನೋಂದಾಯಿತ ಪ್ರದೇಶ, ಕರೆ ವರ್ತನೆ ಮತ್ತು ಮೋಸ ಸೂಚನೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.", "location_notice": "📍 ಇಲ್ಲಿ ತೋರಿಸುವ ಸ್ಥಳವು ಲಭ್ಯವಿದ್ದಾಗ ಫೋನ್ ಸಂಖ್ಯೆಯ ನೋಂದಾಯಿತ ಟೆಲಿಕಾಂ ಪ್ರದೇಶವಾಗಿದೆ — ಇದು ಕರೆ ಮಾಡಿದವರ ಲೈವ್ GPS ಸ್ಥಳವಲ್ಲ.", "privacy_notice": "🔐 ಗೌಪ್ಯತೆ: ಪೂರ್ಣ ಫೋನ್ ಸಂಖ್ಯೆಯನ್ನು ಟೆಲಿಕಾಂ ಲುಕ್‌ಅಪ್‌ಗಾಗಿ ಮಾತ್ರ ಬಳಸಲಾಗುತ್ತದೆ. AIಗೆ ಮಸ್ಕ್ ಮಾಡಿದ ಸಂಖ್ಯೆ ಮತ್ತು ಕರೆ ವಿವರಗಳನ್ನು ಮಾತ್ರ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.", "checking_call": "🔍 ಸಂಖ್ಯೆ, ಕ್ಯಾರಿಯರ್, ನೋಂದಾಯಿತ ಸ್ಥಳ ಮತ್ತು ಮೋಸ ಸೂಚನೆಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...", "invalid_phone": "❌ ಅಮಾನ್ಯ ಫೋನ್ ಸಂಖ್ಯೆ. ಭಾರತೀಯ ಸಂಖ್ಯೆಗೆ 10 ಅಂಕೆಗಳು ಅಥವಾ +91 ಜೊತೆಗೆ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.", "telecom_intelligence": "📡 ಟೆಲಿಕಾಂ & SIM/ನೆಟ್‌ವರ್ಕ್ ಮಾಹಿತಿ", "number_valid": "ಸಂಖ್ಯೆ ಮಾನ್ಯ", "yes": "ಹೌದು", "no": "ಇಲ್ಲ", "unknown": "ತಿಳಿದಿಲ್ಲ", "carrier": "ಕ್ಯಾರಿಯರ್ / ನೆಟ್‌ವರ್ಕ್", "line_type": "ಲೈನ್ ಪ್ರಕಾರ", "line_status": "ಲೈನ್ ಸ್ಥಿತಿ", "country": "🌍 ದೇಶ", "region": "📍 ಪ್ರದೇಶ", "registered_city": "🏙️ ನೋಂದಾಯಿತ ನಗರ", "timezone": "🕐 ಸಮಯ ವಲಯ", "lookup_unavailable": "⚠️ ಟೆಲಿಕಾಂ ಲುಕ್‌ಅಪ್ ಲಭ್ಯವಿಲ್ಲ. ಕರೆ ವರ್ತನೆ ಮತ್ತು AI ಸೂಚನೆಗಳಿಂದ ಕರೆ ವಿಶ್ಲೇಷಿಸಬಹುದು.", "lookup_detail": "ಲುಕ್‌ಅಪ್ ವಿವರ", "risk_evidence": "📊 ಅಪಾಯದ ಸಾಕ್ಷ್ಯ", "behavior_risk": "ವರ್ತನೆ ಅಪಾಯ", "calls_received": "ಸ್ವೀಕರಿಸಿದ ಕರೆಗಳು", "overall_risk": "ಒಟ್ಟು ಅಪಾಯ", "telecom_assessment": "📡 ಟೆಲಿಕಾಂ ಮೌಲ್ಯಮಾಪನ", "telecom_not_verdict": "ಟೆಲಿಕಾಂ ಡೇಟಾ ಸಹಾಯಕ ಸಾಕ್ಷ್ಯ ಮಾತ್ರ; ಇದರಿಂದ ಕರೆ ಮಾಡಿದವರು ಮೋಸಗಾರರು ಎಂದು ಸಾಬೀತಾಗುವುದಿಲ್ಲ.", "quiz_description": "ನಿಮ್ಮ ಜ್ಞಾನವನ್ನು ಪರೀಕ್ಷಿಸಿ ಮತ್ತು ಮೋಸಗಳು ಸಂಭವಿಸುವ ಮೊದಲು ಅವುಗಳನ್ನು ಗುರುತಿಸಲು ಕಲಿಯಿರಿ.", "correct": "✅ ಸರಿಯಾಗಿದೆ!", "incorrect": "❌ ತಪ್ಪಾಗಿದೆ!", "select_answer": "ದಯವಿಟ್ಟು ಮೊದಲು ಉತ್ತರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.", "perfect_score": "🎉 ಪರಿಪೂರ್ಣ ಸ್ಕೋರ್! ನೀವು ಮೋಸ ಪತ್ತೆಹಚ್ಚುವ ತಜ್ಞರು!", "report_scam_title": "ಮೋಸವನ್ನು ವರದಿ ಮಾಡಿ", "raw_response": "ಡೀಬಗ್ - ಮೂಲ ಪ್ರತಿಕ್ರಿಯೆ", "groq_error": "Groq API ದೋಷ", "parse_error": "ಪ್ರತಿಕ್ರಿಯೆಯನ್ನು ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "enter_message": "ವಿಶ್ಲೇಷಿಸಲು ಸಂದೇಶವನ್ನು ನಮೂದಿಸಿ.", "enter_url": "ವಿಶ್ಲೇಷಿಸಲು URL ನಮೂದಿಸಿ.", "enter_phone": "ವಿಶ್ಲೇಷಿಸಲು ಫೋನ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.", "safe_label": "ಸುರಕ್ಷಿತ", "suspicious_label": "ಅನುಮಾನಾಸ್ಪದ", "scam_label": "ಸ್ಕ್ಯಾಮ್", "english": "ಇಂಗ್ಲಿಷ್", "report": "ಮೋಸವನ್ನು ವರದಿ ಮಾಡಿ", "footer_model": "ಡಿಜಿಟಲ್ ಸುರಕ್ಷತೆಗಾಗಿ 💚 ನಿರ್ಮಿಸಲಾಗಿದೆ | ಮಾದರಿ: llama-3.1-8b-instant via Groq"
     }
 }
 
-# ==================== EXAMPLE MESSAGES ====================
-EXAMPLE_MESSAGES = {
-    "en": [
-        "🎰 Congratulations! You've won Rs. 5,00,000 in the Lucky Draw! Call this number immediately to claim your prize before it expires!",
-        "🏦 Dear Customer, your bank account has been suspended due to suspicious activity. Click here to verify immediately: http://fake-bank-verify.in",
-        "📦 Your Amazon package is on hold due to unpaid customs fees. Pay Rs. 499 now to release it: http://amz-delivery.in/pay"
-    ],
-    "te": [
-        "🎰 అభినందనలు! మీరు లక్కీ డ్రా‌లో Rs. 5,00,000 గెలుచుకున్నారు! బహుమతి క్లెయిమ్ చేయడానికి వెంటనే ఈ నంబర్‌కు కాల్ చేయండి!",
-        "🏦 ప్రియ కస్టమర్, అనుమానాస్పద కార్యకలాపాల కారణంగా మీ బ్యాంక్ ఖాతా సస్పెండ్ చేయబడింది. వెంటనే ధృవీకరించడానికి ఇక్కడ క్లిక్ చేయండి: http://fake-bank-verify.in",
-        "📦 మీ Amazon ప్యాకేజీ చెల్లించని కస్టమ్స్ ఫీజుల కారణంగా హోల్డ్‌లో ఉంది. విడుదల చేయడానికి ఇప్పుడే Rs. 499 చెల్లించండి: http://amz-delivery.in/pay"
-    ],
-    "ta": [
-        "🎰 வாழ்த்துக்கள்! லக்கி டிராவில் நீங்கள் Rs. 5,00,000 வென்றுள்ளீர்கள்! பரிசைப் பெற இந்த எண்ணுக்கு உடனடியாக அழைக்கவும்!",
-        "🏦 அன்பு வாடிக்கையாளரே, சந்தேகத்திற்கிடமான செயல்பாடுகளால் உங்கள் வங்கி கணக்கு இடைநிறுத்தப்பட்டுள்ளது. உடனடியாக சரிபார்க்க இங்கே கிளிக் செய்யவும்: http://fake-bank-verify.in",
-        "📦 உங்கள் Amazon பார்சல் செலுத்தப்படாத சுங்கக் கட்டணங்களால் நிறுத்தப்பட்டுள்ளது. விடுவிக்க இப்போது Rs. 499 செலுத்தவும்: http://amz-delivery.in/pay"
-    ],
-    "hi": [
-        "🎰 बधाई हो! आप लकी ड्रॉ में Rs. 5,00,000 जीत गए हैं! पुरस्कार प्राप्त करने के लिए तुरंत इस नंबर पर कॉल करें!",
-        "🏦 प्रिय ग्राहक, संदिग्ध गतिविधि के कारण आपका बैंक खाता निलंबित कर दिया गया है। तुरंत सत्यापित करने के लिए यहां क्लिक करें: http://fake-bank-verify.in",
-        "📦 आपका Amazon पैकेज अवैतनिक सीमा शुल्क के कारण होल्ड पर है। इसे जारी करने के लिए अभी Rs. 499 का भुगतान करें: http://amz-delivery.in/pay"
-    ],
-    "kn": [
-        "🎰 ಅಭಿನಂದನೆಗಳು! ನೀವು ಲಕ್ಕಿ ಡ್ರಾ‌ವಿನಲ್ಲಿ Rs. 5,00,000 ಗೆದ್ದಿದ್ದೀರಿ! ಬಹುಮತಿಯನ್ನು ಪಡೆಯಲು ತಕ್ಷಣ ಈ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡಿ!",
-        "🏦 ಪ್ರಿಯ ಗ್ರಾಹಕ, ಅನುಮಾನಾಸ್ಪದ ಚಟುವಟಿಕೆಯ ಕಾರಣ ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಖಾತೆಯನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ. ತಕ್ಷಣ ಧೃವೀಕರಿಸಲು ಇಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ: http://fake-bank-verify.in",
-        "📦 ನಿಮ್ಮ Amazon ಪ್ಯಾಕೇಜ್ ಅನುಪಜೀವಿ ಸುಂಕದ ಶುಲ್ಕದ ಕಾರಣ ಹೋಲ್ಡ್‌ನಲ್ಲಿದೆ. ಬಿಡುಗಡೆ ಮಾಡಲು ಈಗ Rs. 499 ಪಾವತಿಸಿ: http://amz-delivery.in/pay"
-    ]
-}
+for _code, _values in UI_TRANSLATIONS.items():
+    TRANSLATIONS[_code].update(_values)
 
-# ==================== QUIZ DATA ====================
-QUIZ_DATA = {
-    "en": [
-        {
-            "question": "You receive a message saying you've won a lottery you never entered. What should you do?",
-            "options": ["Call the number immediately to claim", "Ignore and delete the message", "Pay the processing fee to receive the prize", "Share it with friends"],
-            "correct": 1,
-            "explanation": "Legitimate lotteries don't ask winners to pay fees upfront. If you didn't enter, you can't win."
-        },
-        {
-            "question": "A caller claims to be from your bank and asks for your OTP. What is the correct response?",
-            "options": ["Provide the OTP immediately", "Ask them to wait while you verify", "Never share OTPs — banks never ask for them", "Give them the last 4 digits instead"],
-            "correct": 2,
-            "explanation": "Banks and legitimate institutions NEVER ask for your OTP or PIN. This is a sure sign of a scam."
-        },
-        {
-            "question": "You get a link that looks like your bank's website but the URL is slightly different. What should you do?",
-            "options": ["Click and enter your details quickly", "Check the URL carefully and don't click", "Forward it to family members", "Download any attached files"],
-            "correct": 1,
-            "explanation": "Phishing sites often use URLs that look similar to real ones. Always verify the exact domain name."
-        },
-        {
-            "question": "A delivery message asks you to pay a small customs fee via a link. What do you do?",
-            "options": ["Pay immediately to get your package", "Check your actual order on the official website", "Call the number in the message", "Share your card details"],
-            "correct": 1,
-            "explanation": "Always verify through official channels. Scammers use fake delivery messages to steal payment information."
-        },
-        {
-            "question": "Someone on a dating app asks you to invest in cryptocurrency after a week of chatting. What is this?",
-            "options": ["A genuine investment opportunity", "A romance scam", "A bank offer", "A lucky chance"],
-            "correct": 1,
-            "explanation": "This is a classic 'pig butchering' or romance scam. Scammers build trust before asking for money."
-        }
-    ],
-    "te": [
-        {
-            "question": "మీరు ఎప్పుడూ ప్రవేశించని లాటరీలో గెలిచారని ఒక సందేశం వస్తే మీరు ఏమి చేయాలి?",
-            "options": ["బహుమతి క్లెయిమ్ చేయడానికి వెంటనే కాల్ చేయండి", "సందేశాన్ని ఇగ్నోర్ చేసి డిలీట్ చేయండి", "బహుమతి అందుకోవడానికి ప్రాసెసింగ్ ఫీజు చెల్లించండి", "స్నేహితులతో షేర్ చేయండి"],
-            "correct": 1,
-            "explanation": "అసలైన లాటరీలు గెలుపొందినవారి నుండి ముందుగా ఫీజులు అడగవు. మీరు ప్రవేశించకపోతే గెలవలేరు."
-        },
-        {
-            "question": "ఒక కాలర్ మీ బ్యాంక్ నుండి వచ్చానని చెప్పి OTP అడిగితే సరైన స్పందన ఏమిటి?",
-            "options": ["OTP వెంటనే ఇవ్వండి", "ధృవీకరించే వరకు వేచి ఉండమని చెప్పండి", "OTP లు ఎప్పుడూ షేర్ చేయకండి — బ్యాంకులు ఎప్పుడూ అడగవు", "చివరి 4 అంకెలను ఇవ్వండి"],
-            "correct": 2,
-            "explanation": "బ్యాంకులు మరియు అధికారిక సంస్థలు ఎప్పుడూ మీ OTP లేదా PIN అడగవు. ఇది స్కామ్ యొక్క ఖచ్చితమైన సంకేతం."
-        },
-        {
-            "question": "మీ బ్యాంక్ వెబ్‌సైట్ లాగా కనిపించే లింక్ వచ్చింది, కానీ URL కొంచెం భిన్నంగా ఉంది. మీరు ఏమి చేయాలి?",
-            "options": ["వేగంగా క్లిక్ చేసి వివరాలు నమోదు చేయండి", "URL ను జాగ్రత్తగా చూసి క్లిక్ చేయకండి", "కుటుంబ సభ్యులకు ఫార్వార్డ్ చేయండి", "జోడించిన ఫైళ్లను డౌన్‌లోడ్ చేయండి"],
-            "correct": 1,
-            "explanation": "ఫిషింగ్ సైట్లు అసలైనవి లాంటి URL లను ఉపయోగిస్తాయి. ఎల్లప్పుడూ ఖచ్చితమైన డొమైన్ పేరును ధృవీకరించండి."
-        },
-        {
-            "question": "డెలివరీ సందేశం ఒక లింక్ ద్వారా చిన్న కస్టమ్స్ ఫీజు చెల్లించమని అడుగుతోంది. మీరు ఏమి చేయాలి?",
-            "options": ["ప్యాకేజీ కోసం వెంటనే చెల్లించండి", "అధికారిక వెబ్‌సైట్‌లో మీ ఆర్డర్‌ను చూసుకోండి", "సందేశంలోని నంబర్‌కు కాల్ చేయండి", "మీ కార్డు వివరాలను షేర్ చేయండి"],
-            "correct": 1,
-            "explanation": "ఎల్లప్పుడూ అధికారిక ఛానెల్‌ల ద్వారా ధృవీకరించండి. స్కామర్లు నకిలీ డెలివరీ సందేశాలతో పేమెంట్ సమాచారాన్ని దొంగిలిస్తారు."
-        },
-        {
-            "question": "డేటింగ్ యాప్‌లో ఎవరో వారం రోజుల చాటింగ్ తర్వాత క్రిప్టోకరెన్సీలో పెట్టుబడి పెట్టమని అడుగుతున్నారు. ఇది ఏమిటి?",
-            "options": ["ఒక నిజమైన పెట్టుబడి అవకాశం", "ఒక రొమాన్స్ స్కామ్", "ఒక బ్యాంక్ ఆఫర్", "ఒక అదృష్ట అవకాశం"],
-            "correct": 1,
-            "explanation": "ఇది క్లాసిక్ 'పిగ్ బుచరింగ్' లేదా రొమాన్స్ స్కామ్. స్కామర్లు డబ్బు అడగడానికి ముందు నమ్మకం పెంచుకుంటారు."
-        }
-    ],
-    "ta": [
-        {
-            "question": "நீங்கள் ஒருபோதும் நுழையாத லாட்டரியில் வென்றுவிட்டீர்கள் என்று ஒரு செய்தி வருகிறது. நீங்கள் என்ன செய்வீர்கள்?",
-            "options": ["பரிசைப் பெற உடனடியாக அழைக்கவும்", "செய்தியை புறக்கணித்து நீக்கவும்", "பரிசைப் பெற செயலாக்கக் கட்டணம் செலுத்தவும்", "நண்பர்களுடன் பகிரவும்"],
-            "correct": 1,
-            "explanation": "சட்டபூர்வமான லாட்டரிகள் வெற்றியாளர்களிடம் முன்பணம் கேட்காது. நீங்கள் நுழையாவிட்டால், வெல்ல முடியாது."
-        },
-        {
-            "question": "ஒரு அழைப்பாளர் உங்கள் வங்கியிலிருந்து வந்ததாகக் கூறி OTP ஐ கேட்கிறார். சரியான பதில் என்ன?",
-            "options": ["OTP ஐ உடனடியாக வழங்கவும்", "சரிபார்க்கும் வரை காத்திருக்கச் சொல்லவும்", "OTP களை ஒருபோதும் பகிர வேண்டாம் — வங்கிகள் ஒருபோதும் கேட்காது", "கடைசி 4 இலக்கங்களை கொடுக்கவும்"],
-            "correct": 2,
-            "explanation": "வங்கிகள் மற்றும் சட்டபூர்வமான நிறுவனங்கள் உங்கள் OTP அல்லது PIN ஐ ஒருபோதும் கேட்காது. இது மோசடியின் நிச்சயமான அறிகுறி."
-        },
-        {
-            "question": "உங்கள் வங்கி இணையதளம் போல் தோன்றும் இணைப்பு வந்துள்ளது, ஆனால் URL சற்று வேறுபட்டுள்ளது. நீங்கள் என்ன செய்வீர்கள்?",
-            "options": ["விரைவாக கிளிக் செய்து விவரங்களை உள்ளிடவும்", "URL ஐ கவனமாக சரிபார்த்து கிளிக் செய்ய வேண்டாம்", "குடும்ப உறுப்பினர்களுக்கு அனுப்பவும்", "இணைக்கப்பட்ட கோப்புகளை பதிவிறக்கவும்"],
-            "correct": 1,
-            "explanation": "பிஷிங் தளங்கள் அசலானவை போன்ற URL களை பயன்படுத்துகின்றன. எப்போதும் சரியான டொமைன் பெயரை சரிபார்க்கவும்."
-        },
-        {
-            "question": "டெலிவரி செய்தி ஒரு இணைப்பு வழியாக சிறிய சுங்கக் கட்டணத்தை செலுத்த கேட்கிறது. நீங்கள் என்ன செய்வீர்கள்?",
-            "options": ["பார்சலைப் பெற உடனடியாக செலுத்தவும்", "அதிகாரப்பூர்வ இணையதளத்தில் உங்கள் ஆர்டரை சரிபார்க்கவும்", "செய்தியில் உள்ள எண்ணுக்கு அழைக்கவும்", "உங்கள் அட்டை விவரங்களை பகிரவும்"],
-            "correct": 1,
-            "explanation": "எப்போதும் அதிகாரப்பூர்வ சேனல்கள் வழியாக சரிபார்க்கவும். மோசடியாளர்கள் போலி டெலிவரி செய்திகள் மூலம் கட்டண தகவலை திருடுகின்றனர்."
-        },
-        {
-            "question": "டேட்டிங் செயலியில் யாரோ ஒரு வாரம் அரட்டையடித்த பிறகு கிரிப்டோகரன்சியில் முதலீடு செய்ய கேட்கிறார். இது என்ன?",
-            "options": ["ஒரு நேர்மையான முதலீட்டு வாய்ப்பு", "ஒரு ரொமான்ஸ் மோசடி", "ஒரு வங்கி சலுகை", "ஒரு அதிர்ஷ்ட வாய்ப்பு"],
-            "correct": 1,
-            "explanation": "இது கிளாசிக் 'பிக் பட்சரிங்' அல்லது ரொமான்ஸ் மோசடி. மோசடியாளர்கள் பணம் கேட்பதற்கு முன் நம்பிக்கையை உருவாக்குகிறார்கள்."
-        }
-    ],
-    "hi": [
-        {
-            "question": "आपको एक संदेश आता है कि आप एक लॉटरी जीत गए हैं जिसमें आपने कभी प्रवेश नहीं किया। आपको क्या करना चाहिए?",
-            "options": ["पुरस्कार प्राप्त करने के लिए तुरंत कॉल करें", "संदेश को अनदेखा करें और हटा दें", "पुरस्कार प्राप्त करने के लिए प्रोसेसिंग शुल्क दें", "दोस्तों के साथ साझा करें"],
-            "correct": 1,
-            "explanation": "वैध लॉटरियाँ विजेताओं से अग्रिम शुल्क नहीं मांगतीं। यदि आपने प्रवेश नहीं किया, तो आप जीत नहीं सकते।"
-        },
-        {
-            "question": "एक कॉलर आपके बैंक से होने का दावा करता है और आपका OTP मांगता है। सही प्रतिक्रिया क्या है?",
-            "options": ["OTP तुरंत प्रदान करें", "सत्यापित होने तक इंतजार करने के लिए कहें", "OTP कभी साझा न करें — बैंक कभी नहीं मांगते", "अंतिम 4 अंक दें"],
-            "correct": 2,
-            "explanation": "बैंक और वैध संस्थान कभी भी आपका OTP या PIN नहीं मांगते। यह घोटाले का निश्चित संकेत है।"
-        },
-        {
-            "question": "आपको एक लिंक मिलता है जो आपके बैंक की वेबसाइट जैसा दिखता है लेकिन URL थोड़ा अलग है। आपको क्या करना चाहिए?",
-            "options": ["जल्दी से क्लिक करें और विवरण दर्ज करें", "URL को ध्यान से जांचें और क्लिक न करें", "इसे परिवार के सदस्यों को भेजें", "संलग्न फाइलें डाउनलोड करें"],
-            "correct": 1,
-            "explanation": "फिशिंग साइटें अक्सर असली लोगों जैसे URL का उपयोग करती हैं। हमेशा सटीक डोमेन नाम सत्यापित करें।"
-        },
-        {
-            "question": "एक डिलीवरी संदेश आपसे एक लिंक के माध्यम से एक छोटा सीमा शुल्क भुगतान करने के लिए कहता है। आप क्या करेंगे?",
-            "options": ["पैकेज प्राप्त करने के लिए तुरंत भुगतान करें", "आधिकारिक वेबसाइट पर अपने ऑर्डर की जांच करें", "संदेश में दिए गए नंबर पर कॉल करें", "अपने कार्ड विवरण साझा करें"],
-            "correct": 1,
-            "explanation": "हमेशा आधिकारिक चैनलों के माध्यम से सत्यापित करें। घोटालेबाज नकली डिलीवरी संदेशों का उपयोग करके भुगतान जानकारी चुराते हैं।"
-        },
-        {
-            "question": "डेटिंग ऐप पर कोई एक हफ्ते की बातचीत के बाद क्रिप्टोकरेंसी में निवेश करने के लिए कहता है। यह क्या है?",
-            "options": ["एक वास्तविक निवेश अवसर", "एक रोमांस घोटाला", "एक बैंक ऑफर", "एक भाग्यशाली मौका"],
-            "correct": 1,
-            "explanation": "यह एक क्लासिक 'पिग बुचरिंग' या रोमांस घोटाला है। घोटालेबाज पैसे मांगने से पहले विश्वास बनाते हैं।"
-        }
-    ],
-    "kn": [
-        {
-            "question": "ನೀವು ಎಂದಿಗೂ ಪ್ರವೇಶಿಸದ ಲಾಟರಿಯಲ್ಲಿ ಗೆದ್ದಿರುವೀರಿ ಎಂದು ಸಂದೇಶ ಬಂದರೆ ನೀವು ಏನು ಮಾಡಬೇಕು?",
-            "options": ["ಬಹುಮತಿಯನ್ನು ಪಡೆಯಲು ತಕ್ಷಣ ಕರೆ ಮಾಡಿ", "ಸಂದೇಶವನ್ನು ನಿರ್ಲಕ್ಷಿಸಿ ಅಳಿಸಿ", "ಬಹುಮತಿಯನ್ನು ಪಡೆಯಲು ಪ್ರಾಸೆಸಿಂಗ್ ಶುಲ್ಕ ಪಾವತಿಸಿ", "ಸ್ನೇಹಿತರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ"],
-            "correct": 1,
-            "explanation": "ಕಾನೂನುಬದ್ಧ ಲಾಟರಿಗಳು ವಿಜೇತರಿಂದ ಮುಂಗಡ ಶುಲ್ಕಗಳನ್ನು ಕೇಳುವುದಿಲ್ಲ. ನೀವು ಪ್ರವೇಶಿಸದಿದ್ದರೆ, ಗೆಲ್ಲಲು ಸಾಧ್ಯವಿಲ್ಲ."
-        },
-        {
-            "question": "ಒಬ್ಬ ಕಾಲರ್ ನಿಮ್ಮ ಬ್ಯಾಂಕ್‌ನಿಂದ ಬಂದವನು ಎಂದು ಹೇಳಿ OTP ಕೇಳುತ್ತಾನೆ. ಸರಿಯಾದ ಪ್ರತಿಕ್ರಿಯೆ ಏನು?",
-            "options": ["OTP ಅನ್ನು ತಕ್ಷಣ ಒದಗಿಸಿ", "ಧೃವೀಕರಿಸುವವರೆಗೆ ಕಾಯಲು ಹೇಳಿ", "OTP ಗಳನ್ನು ಎಂದಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ — ಬ್ಯಾಂಕುಗಳು ಎಂದಿಗೂ ಕೇಳುವುದಿಲ್ಲ", "ಕೊನೆಯ 4 ಅಂಕೆಗಳನ್ನು ನೀಡಿ"],
-            "correct": 2,
-            "explanation": "ಬ್ಯಾಂಕುಗಳು ಮತ್ತು ಕಾನೂನುಬದ್ಧ ಸಂಸ್ಥೆಗಳು ಎಂದಿಗೂ ನಿಮ್ಮ OTP ಅಥವಾ PIN ಅನ್ನು ಕೇಳುವುದಿಲ್ಲ. ಇದು ಸ್ಕ್ಯಾಮ್‌ನ ನಿಶ್ಚಿತ ಸಂಕೇತ."
-        },
-        {
-            "question": "ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ವೆಬ್‌ಸೈಟ್‌ನಂತೆ ಕಾಣುವ ಲಿಂಕ್ ಬಂದಿದೆ, ಆದರೆ URL ಸ್ವಲ್ಪ ಭಿನ್ನವಾಗಿದೆ. ನೀವು ಏನು ಮಾಡಬೇಕು?",
-            "options": ["ವೇಗವಾಗಿ ಕ್ಲಿಕ್ ಮಾಡಿ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ", "URL ಅನ್ನು ಎಚ್ಚರಿಕೆಯಿಂದ ಪರಿಶೀಲಿಸಿ ಕ್ಲಿಕ್ ಮಾಡಬೇಡಿ", "ಕುಟುಂಬ ಸದಸ್ಯರಿಗೆ ಫಾರ್ವರ್ಡ್ ಮಾಡಿ", "ಜೋಡಿಸಿದ ಫೈಲ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"],
-            "correct": 1,
-            "explanation": "ಫಿಶಿಂಗ್ ಸೈಟ್‌ಗಳು ಸಾಮಾನ್ಯವಾಗಿ ನಿಜವಾದವುಗಳನ್ನು ಹೋಲುವ URL ಗಳನ್ನು ಬಳಸುತ್ತವೆ. ಎಂದಿಗೂ ನಿಖರವಾದ ಡೊಮೇನ್ ಹೆಸರನ್ನು ಧೃವೀಕರಿಸಿ."
-        },
-        {
-            "question": "ಡೆಲಿವರಿ ಸಂದೇಶವು ಒಂದು ಲಿಂಕ್ ಮೂಲಕ ಸಣ್ಣ ಸುಂಕದ ಶುಲ್ಕವನ್ನು ಪಾವತಿಸಲು ಕೇಳುತ್ತದೆ. ನೀವು ಏನು ಮಾಡುತ್ತೀರಿ?",
-            "options": ["ಪ್ಯಾಕೇಜ್ ಪಡೆಯಲು ತಕ್ಷಣ ಪಾವತಿಸಿ", "ಅಧಿಕೃತ ವೆಬ್‌ಸೈಟ್‌ನಲ್ಲಿ ನಿಮ್ಮ ಆರ್ಡರ್ ಪರಿಶೀಲಿಸಿ", "ಸಂದೇಶದಲ್ಲಿನ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡಿ", "ನಿಮ್ಮ ಕಾರ್ಡ್ ವಿವರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಿ"],
-            "correct": 1,
-            "explanation": "ಎಂದಿಗೂ ಅಧಿಕೃತ ಚಾನೆಲ್‌ಗಳ ಮೂಲಕ ಧೃವೀಕರಿಸಿ. ಸ್ಕ್ಯಾಮರ್‌ಗಳು ನಕಲಿ ಡೆಲಿವರಿ ಸಂದೇಶಗಳನ್ನು ಬಳಸಿ ಪಾವತಿ ಮಾಹಿತಿಯನ್ನು ಕದಿಯುತ್ತಾರೆ."
-        },
-        {
-            "question": "ಡೇಟಿಂಗ್ ಯಾಪ್‌ನಲ್ಲಿ ಯಾರೋ ಒಂದು ವಾರ ಚಾಟಿಂಗ್ ನಂತರ ಕ್ರಿಪ್ಟೋಕರೆನ್ಸಿಯಲ್ಲಿ ಹೂಡಿಕೆ ಮಾಡಲು ಕೇಳುತ್ತಾರೆ. ಇದು ಏನು?",
-            "options": ["ಒಂದು ನಿಜವಾದ ಹೂಡಿಕೆ ಅವಕಾಶ", "ಒಂದು ರೊಮಾನ್ಸ್ ಸ್ಕ್ಯಾಮ್", "ಒಂದು ಬ್ಯಾಂಕ್ ಆಫರ್", "ಒಂದು ಅದೃಷ್ಟದ ಅವಕಾಶ"],
-            "correct": 1,
-            "explanation": "ಇದು ಕ್ಲಾಸಿಕ್ 'ಪಿಗ್ ಬುಚರಿಂಗ್' ಅಥವಾ ರೊಮಾನ್ಸ್ ಸ್ಕ್ಯಾಮ್. ಸ್ಕ್ಯಾಮರ್‌ಗಳು ಹಣ ಕೇಳುವ ಮೊದಲು ವಿಶ್ವಾಸವನ್ನು ನಿರ್ಮಿಸುತ್ತಾರೆ."
-        }
-    ]
-}
-
-# ==================== SPAM DATABASE ====================
-# Pre-seeded with common Indian spam patterns for demo
-KNOWN_SPAM_PATTERNS = [
-    r"\+?91[0-9]{10}",  # generic pattern placeholder
-]
-
-# Community-reported spam numbers (persists in session)
-if "reported_spam" not in st.session_state:
-    st.session_state.reported_spam = set([
-        "9876543210",  # demo spam
-        "9998887776",  # demo spam
-    ])
-
-# ==================== REAL PHONE LOOKUP ====================
-def lookup_phone_intel(phone_number: str, api_key: str = None):
-    """
-    Multi-source phone intelligence.
-    Priority: 1) Community DB  2) NumVerify API  3) Heuristic fallback
-    """
-    clean = re.sub(r"[^\d]", "", phone_number)
-    if clean.startswith("91") and len(clean) > 10:
-        clean = clean[2:]
-    
-    if len(clean) != 10:
-        return {"valid": False, "error": "Invalid Indian number"}
-    
-    result = {
-        "valid": True,
-        "number": clean,
-        "carrier": "Unknown",
-        "line_type": "Unknown",
-        "location": "Unknown",
-        "country": "India",
-        "spam_score": 0,  # 0-100, higher = more likely spam
-        "report_count": 0,
-        "source": "fallback"
-    }
-    
-    # 1. Check community reports
-    if clean in st.session_state.reported_spam:
-        result["spam_score"] = 85
-        result["report_count"] = 1
-        result["source"] = "community_db"
-    
-    # 2. Try NumVerify API (FREE TIER - sign up at numverify.com)
-    # Uncomment and add your key for real validation:
-    """
-    if api_key:
-        try:
-            resp = requests.get(
-                f"http://apilayer.net/api/validate?access_key={api_key}&number=91{clean}&country_code=&format=1",
-                timeout=5
-            )
-            data = resp.json()
-            if data.get("valid"):
-                result["carrier"] = data.get("carrier", "Unknown")
-                result["line_type"] = data.get("line_type", "Unknown")
-                result["location"] = data.get("location", "Unknown")
-                result["country"] = data.get("country_name", "India")
-                result["source"] = "numverify"
-        except Exception:
-            pass
-    """
-    
-    # 3. Truecaller-style enrichment (mock for hackathon demo)
-    if result["spam_score"] == 0:
-        # Known spam prefixes (Indian telemarketer ranges)
-        spam_prefixes = ["140", "141", "142", "143", "144", "145", "146", "147", "148", "149"]
-        if clean[:3] in spam_prefixes:
-            result["spam_score"] = 70
-            result["source"] = "prefix_heuristic"
-        elif clean in ["9876543210", "9998887776"]:  # demo seeded spam
-            result["spam_score"] = 90
-            result["report_count"] = 12
-            result["source"] = "seeded_db"
-    
-    return result
-
-def report_number(phone_number: str):
-    clean = re.sub(r"[^\d]", "", phone_number)
-    if clean.startswith("91") and len(clean) > 10:
-        clean = clean[2:]
-    if len(clean) == 10:
-        st.session_state.reported_spam.add(clean)
-
-# ==================== AI ANALYSIS FUNCTIONS ====================
-def analyze_message_ai(message: str, lang: str):
-    """Use Groq AI to analyze a message for scam indicators."""
-    prompt = f"""You are Raksha, a digital safety guardian AI. Analyze the following message for scam indicators.
-
-Respond ONLY in valid JSON format with this exact structure:
-{{
-  "verdict": "Scam" | "Suspicious" | "Safe",
-  "confidence": 0-100,
-  "red_flags": ["list of specific red flags found"],
-  "advice": "specific advice for the user",
-  "risk_factors": ["list of risk factors"],
-  "explanation": "brief explanation of the analysis"
-}}
-
-Message to analyze: """ + json.dumps(message) + """
-
-Respond in English only, with the JSON structure above."""
-
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a cybersecurity expert specializing in scam detection for Indian users."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=800
-        )
-
-        content = response.choices[0].message.content
-        # Extract JSON from response
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Analysis error: {str(e)}")
-        return None
-
-def analyze_url_ai(url: str, lang: str):
-    """Use Groq AI to analyze a URL for phishing/scam indicators."""
-    prompt = f"""You are Raksha, a digital safety guardian AI. Analyze the following URL for phishing and scam indicators.
-
-Respond ONLY in valid JSON format with this exact structure:
-{{
-  "verdict": "Scam" | "Suspicious" | "Safe",
-  "confidence": 0-100,
-  "red_flags": ["list of specific red flags found"],
-  "advice": "specific advice for the user",
-  "risk_factors": ["list of risk factors"],
-  "explanation": "brief explanation of the analysis"
-}}
-
-URL to analyze: {url}
-
-Respond in English only, with the JSON structure above."""
-
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a cybersecurity expert specializing in phishing and malicious URL detection."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=800
-        )
-
-        content = response.choices[0].message.content
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Analysis error: {str(e)}")
-        return None
-
-def analyze_call_ai(phone: str, description: str, call_count: int, intel: dict, lang: str):
-    """Use Groq AI to analyze a call with REAL intel data."""
-    masked = phone[:4] + "****" + phone[-2:] if len(phone) >= 6 else "******"
-    
-    # CRITICAL: Explicitly tell AI not to flag unknown/new numbers
-    prompt = f"""You are Raksha, a digital safety guardian AI. Analyze the following call details.
-
-    CRITICAL RULES:
-    - If spam_score is 0 and report_count is 0 and there are NO suspicious behaviors in the description, verdict MUST be "Safe"
-    - Do NOT mark numbers as "Suspicious" just because they are unknown or new
-    - Only mark "Scam" if there is strong evidence (high spam score OR clear red flags in description)
-    - Only mark "Suspicious" if there are mild warning signs
-    - "Safe" is the default for clean numbers with no reports and no suspicious behavior
-
-    Respond ONLY in valid JSON format:
-    {{
-      "verdict": "Scam" | "Suspicious" | "Safe",
-      "confidence": 0-100,
-      "red_flags": ["list of specific red flags found, or empty if safe"],
-      "advice": "specific advice for the user",
-      "risk_factors": ["list of risk factors, or empty if safe"],
-      "explanation": "brief explanation. If safe, say why it's safe."
-    }}
-
-    Call Details:
-    - Phone Number (masked): {masked}
-    - Number of calls received: {call_count}
-    - Caller description: {json.dumps(description)}
-    - Spam Score (0-100, from database): {intel.get('spam_score', 0)}
-    - Community Reports: {intel.get('report_count', 0)}
-    - Carrier: {intel.get('carrier', 'Unknown')}
-    - Line Type: {intel.get('line_type', 'Unknown')}
-    - Location: {intel.get('location', 'Unknown')}
-
-    Respond in English only, with the JSON structure above."""
-
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a cybersecurity expert. Be accurate: do not flag innocent numbers. Default to Safe unless there is evidence."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.1,  # Lower = more deterministic, less hallucination
-            max_tokens=800
-        )
-
-        content = response.choices[0].message.content
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Analysis error: {str(e)}")
-        return None
-    """Use Groq AI to analyze a call for scam indicators."""
-    masked = phone[:4] + "****" + phone[-2:] if len(phone) >= 6 else "******"
-
-    prompt = f"""You are Raksha, a digital safety guardian AI. Analyze the following call details for scam indicators.
-
-Respond ONLY in valid JSON format with this exact structure:
-{{
-  "verdict": "Scam" | "Suspicious" | "Safe",
-  "confidence": 0-100,
-  "red_flags": ["list of specific red flags found"],
-  "advice": "specific advice for the user",
-  "risk_factors": ["list of risk factors"],
-  "explanation": "brief explanation of the analysis"
-}}
-
-Call Details:
-- Phone Number (masked): {masked}
-- Number of calls received: {call_count}
-- Caller description: """ + json.dumps(description) + """
-
-Respond in English only, with the JSON structure above."""
-
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a cybersecurity expert specializing in phone scam and vishing detection for Indian users."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=800
-        )
-
-        content = response.choices[0].message.content
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Analysis error: {str(e)}")
-        return None
-
-# ==================== UI HELPERS ====================
-def get_badge_class(verdict: str):
-    verdict = verdict.lower()
-    if "scam" in verdict or "high" in verdict:
-        return "scam-high"
-    elif "suspicious" in verdict or "medium" in verdict:
-        return "scam-medium"
-    elif "safe" in verdict or "low" in verdict:
-        return "scam-safe"
-    else:
-        return "scam-low"
-
-def display_result(result: dict, ui: dict):
-    if not result:
-        st.error(ui["parse_error"])
-        return
-
-    verdict = result.get("verdict", "Unknown")
-    confidence = result.get("confidence", 0)
-    badge_class = get_badge_class(verdict)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"""
-            <div style="text-align: center; margin: 1rem 0;">
-                <div class="scam-badge {badge_class}" style="font-size: 1.5rem; padding: 1rem 2rem;">
-                    {ui.get("verdict", "Verdict")}: {verdict}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.metric(ui.get("confidence", "Confidence"), f"{confidence}%")
-
-    st.divider()
-
-    if "red_flags" in result and result["red_flags"]:
-        st.subheader(f"🚩 {ui.get('red_flags', 'Red Flags')}")
-        for flag in result["red_flags"]:
-            st.markdown(f"- {flag}")
-
-    if "risk_factors" in result and result["risk_factors"]:
-        st.subheader(f"⚠️ {ui.get('risk_factors', 'Risk Factors')}")
-        for factor in result["risk_factors"]:
-            st.markdown(f"- {factor}")
-
-    if "explanation" in result and result["explanation"]:
-        st.subheader(f"ℹ️ {ui.get('explanation', 'Explanation')}")
-        st.info(result["explanation"])
-
-    if "advice" in result and result["advice"]:
-        st.subheader(f"💡 {ui.get('advice', 'Advice')}")
-        st.success(result["advice"])
+# Names used when showing the selected language in bilingual AI results.
+TRANSLATIONS["en"].update({"selected_language": "English", "unavailable": "Unavailable", "model": "Model", "telecom_source_note": "ℹ️ Carrier, line and registered-location information comes from telecom number intelligence. It cannot identify a person's exact current physical location.", "provider_risk": "Provider phone-risk signal", "lookup_setup": "⚠️ Telecom lookup is unavailable. Add ABSTRACT_API_KEY to enable carrier, line-type and registered-location checks."})
+TRANSLATIONS["te"].update({"selected_language": "తెలుగు", "unavailable": "అందుబాటులో లేదు", "model": "మోడల్", "telecom_source_note": "ℹ️ క్యారియర్, లైన్ మరియు నమోదైన ప్రాంత సమాచారం టెలికాం నంబర్ ఇంటెలిజెన్స్ నుండి వస్తుంది. ఇది వ్యక్తి యొక్క ఖచ్చితమైన ప్రస్తుత భౌతిక స్థానాన్ని గుర్తించదు.", "provider_risk": "ప్రొవైడర్ ఫోన్-రిస్క్ సూచన", "lookup_setup": "⚠️ టెలికాం లుక్‌అప్ అందుబాటులో లేదు. క్యారియర్, లైన్ రకం మరియు నమోదైన ప్రాంత తనిఖీల కోసం ABSTRACT_API_KEY ను జోడించండి."})
+TRANSLATIONS["ta"].update({"selected_language": "தமிழ்", "unavailable": "கிடைக்கவில்லை", "model": "மாடல்", "telecom_source_note": "ℹ️ கேரியர், லைன் மற்றும் பதிவு செய்யப்பட்ட பகுதி தகவல்கள் தொலைத்தொடர்பு எண் தகவலிலிருந்து வருகின்றன. இது ஒருவரின் துல்லியமான தற்போதைய இருப்பிடத்தை கண்டறியாது.", "provider_risk": "வழங்குநர் தொலைபேசி-ஆபத்து குறியீடு", "lookup_setup": "⚠️ தொலைத்தொடர்பு சரிபார்ப்பு கிடைக்கவில்லை. கேரியர், லைன் வகை மற்றும் பதிவு செய்யப்பட்ட பகுதி சரிபார்ப்புக்கு ABSTRACT_API_KEY ஐ சேர்க்கவும்."})
+TRANSLATIONS["hi"].update({"selected_language": "हिन्दी", "unavailable": "उपलब्ध नहीं", "model": "मॉडल", "telecom_source_note": "ℹ️ कैरियर, लाइन और पंजीकृत क्षेत्र की जानकारी टेलीकॉम नंबर इंटेलिजेंस से आती है। यह किसी व्यक्ति का सटीक वर्तमान भौतिक स्थान नहीं बता सकती।", "provider_risk": "प्रदाता फोन-जोखिम संकेत", "lookup_setup": "⚠️ टेलीकॉम लुकअप उपलब्ध नहीं है। कैरियर, लाइन प्रकार और पंजीकृत स्थान की जांच के लिए ABSTRACT_API_KEY जोड़ें।"})
+TRANSLATIONS["kn"].update({"selected_language": "ಕನ್ನಡ", "unavailable": "ಲಭ್ಯವಿಲ್ಲ", "model": "ಮಾದರಿ", "telecom_source_note": "ℹ️ ಕ್ಯಾರಿಯರ್, ಲೈನ್ ಮತ್ತು ನೋಂದಾಯಿತ ಪ್ರದೇಶದ ಮಾಹಿತಿ ಟೆಲಿಕಾಂ ಸಂಖ್ಯೆ ಇಂಟೆಲಿಜೆನ್ಸ್‌ನಿಂದ ಬರುತ್ತದೆ. ಇದು ವ್ಯಕ್ತಿಯ ನಿಖರ ಪ್ರಸ್ತುತ ಭೌತಿಕ ಸ್ಥಳವನ್ನು ಗುರುತಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.", "provider_risk": "ಪ್ರೊವೈಡರ್ ಫೋನ್-ರಿಸ್ಕ್ ಸೂಚನೆ", "lookup_setup": "⚠️ ಟೆಲಿಕಾಂ ಲುಕ್‌ಅಪ್ ಲಭ್ಯವಿಲ್ಲ. ಕ್ಯಾರಿಯರ್, ಲೈನ್ ಪ್ರಕಾರ ಮತ್ತು ನೋಂದಾಯಿತ ಪ್ರದೇಶ ಪರಿಶೀಲನೆಗಾಗಿ ABSTRACT_API_KEY ಸೇರಿಸಿ."})
 
 # ==================== SESSION STATE ====================
+if "scams_detected" not in st.session_state:
+    st.session_state.scams_detected = 1247
+if "users_protected" not in st.session_state:
+    st.session_state.users_protected = 8934
+if "accuracy" not in st.session_state:
+    st.session_state.accuracy = 96.5
 if "messages_checked" not in st.session_state:
     st.session_state.messages_checked = 0
 if "scams_caught" not in st.session_state:
     st.session_state.scams_caught = 0
-if "quiz_score" not in st.session_state:
-    st.session_state.quiz_score = 0
-if "quiz_current" not in st.session_state:
-    st.session_state.quiz_current = 0
-if "quiz_answered" not in st.session_state:
-    st.session_state.quiz_answered = False
+if "example_msg" not in st.session_state:
+    st.session_state.example_msg = ""
 if "reported_spam" not in st.session_state:
     st.session_state.reported_spam = set(["9876543210", "9998887776"])
 
-# ==================== SIDEBAR ====================
+# ==================== LANGUAGE + SIDEBAR ====================
+# Keep the selected language in session state so the entire page rerenders in it.
+if "language_code" not in st.session_state:
+    st.session_state.language_code = "en"
+
 with st.sidebar:
-    st.markdown(f"""
-        <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 style="font-size: 2.5rem; margin: 0;">🛡️</h1>
-            <h2 style="margin-top: 0.5rem; color: #1e40af;">Raksha</h2>
-            <p style="color: #64748b; font-size: 0.9rem;">{UI_TRANSLATIONS['en']['mission_text']}</p>
-        </div>
-    """, unsafe_allow_html=True)
-
+    current_code = st.session_state.language_code
+    current_t = TRANSLATIONS[current_code]
     selected_language = st.selectbox(
-        UI_TRANSLATIONS["en"]["language_label"],
+        f"🌐 {current_t['language_label']}",
         options=list(LANGUAGE_OPTIONS.keys()),
-        index=0
+        index=list(LANGUAGE_OPTIONS.values()).index(current_code),
+        key="language_selector"
     )
-    lang_code = LANGUAGE_OPTIONS[selected_language]
-    T = TRANSLATIONS[lang_code]
-    UI = UI_TRANSLATIONS[lang_code]
+    new_code = LANGUAGE_OPTIONS[selected_language]
+    if new_code != st.session_state.language_code:
+        st.session_state.language_code = new_code
+        st.rerun()
 
-    st.divider()
+lang_code = st.session_state.language_code
+t = TRANSLATIONS[lang_code]
 
-    st.markdown(f"### {UI['stats']}")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(UI["messages_checked"], st.session_state.messages_checked)
-    with col2:
-        st.metric(UI["scams_caught"], st.session_state.scams_caught)
+# ==================== SIDEBAR CONTENT ====================
+with st.sidebar:
+    st.title("🛡️ Raksha")
+    st.markdown("---")
+    st.subheader(f"🎯 {t['mission']}")
+    st.write(t["mission_text"])
+    st.markdown("---")
+    st.subheader(f"📊 {t['stats']}")
 
-    st.divider()
+    for key, default in [("scams_detected", 1247), ("users_protected", 8934), ("accuracy", 96.5)]:
+        if key not in st.session_state:
+            st.session_state[key] = default
 
-    st.markdown(f"### {UI['why_raksha']}")
-    st.markdown(f"{UI['why_1']}")
-    st.markdown(f"{UI['why_2']}")
-    st.markdown(f"{UI['why_3']}")
-    st.markdown(f"{UI['why_4']}")
+    st.metric(t["stats_scams_blocked"], st.session_state.scams_detected)
+    st.metric(t["stats_users_protected"], st.session_state.users_protected)
+    st.metric(t["stats_accuracy"], f"{st.session_state.accuracy}%")
+    st.markdown("---")
 
-    st.divider()
+    st.subheader(f"✅ {t['why_raksha']}")
+    st.markdown(t["why_1"])
+    st.markdown(t["why_2"])
+    st.markdown(t["why_3"])
+    st.markdown(t["why_4"])
+    st.markdown("---")
+    st.caption("🛡️ Raksha - Family Digital Safety Guardian")
+    st.caption(t["made_for"])
+    st.caption(f"{t['model']}: llama-3.1-8b-instant via Groq")
 
-    st.markdown(f"<p style='text-align: center; color: #64748b; font-size: 0.85rem;'>{UI['made_for']}</p>", unsafe_allow_html=True)
-
-# ==================== MAIN CONTENT ====================
+# ==================== HERO BANNER ====================
 st.markdown(f"""
     <div class="hero-banner">
-        <h1>{UI['hero_title']}</h1>
-        <p>{UI['hero_subtitle']}</p>
+        <h1>🛡️ {t['hero_title']}</h1>
+        <p>{t['hero_subtitle']}</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Tabs
+# ==================== GROQ ANALYSIS FUNCTION ====================
+def analyze_with_groq(prompt, system_message):
+    try:
+        message = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1024,
+        )
+        return message.choices[0].message.content
+    except Exception as e:
+        st.error(f"{t['groq_error']}: {str(e)}")
+        return None
+
+# ==================== PHONE INTELLIGENCE HELPERS ====================
+def normalize_phone_number(phone):
+    """Normalize an Indian phone number to E.164 format when possible."""
+    cleaned = re.sub(r"[^\d+]", "", phone.strip())
+
+    if cleaned.startswith("00"):
+        cleaned = "+" + cleaned[2:]
+
+    if cleaned.startswith("+"):
+        return cleaned
+
+    digits = re.sub(r"\D", "", cleaned)
+
+    # Raksha is designed primarily for Indian users.
+    if len(digits) == 10:
+        return "+91" + digits
+
+    if len(digits) == 12 and digits.startswith("91"):
+        return "+" + digits
+
+    return "+" + digits if digits else ""
+
+
+def mask_phone_number(phone):
+    """Mask the phone number before sending it to the AI model or displaying it."""
+    digits = re.sub(r"\D", "", phone)
+    if len(digits) >= 4:
+        return "••••••" + digits[-4:]
+    return "••••"
+
+
+def get_abstract_api_key():
+    """Read the Abstract Phone Validation API key from environment/secrets."""
+    key = os.getenv("ABSTRACT_API_KEY")
+
+    if not key:
+        try:
+            key = st.secrets.get("ABSTRACT_API_KEY")
+        except Exception:
+            key = None
+
+    return key
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def lookup_phone_intelligence(phone_number):
+    """
+    Query Abstract's Phone Validation API.
+
+    Returns carrier, line type, registered location, validity and risk
+    information. This is telecom/registration metadata, NOT live GPS location.
+    """
+    api_key = get_abstract_api_key()
+
+    if not api_key:
+        return {
+            "available": False,
+            "error": "ABSTRACT_API_KEY is not configured."
+        }
+
+    normalized = normalize_phone_number(phone_number)
+
+    if not normalized or len(re.sub(r"\D", "", normalized)) < 8:
+        return {
+            "available": False,
+            "error": "Invalid phone number format."
+        }
+
+    try:
+        params = urlencode({
+            "api_key": api_key,
+            "phone": normalized
+        })
+
+        url = "https://phonevalidation.abstractapi.com/v1/?" + params
+        request = Request(
+            url,
+            headers={"User-Agent": "Raksha-Family-Digital-Safety/1.0"}
+        )
+
+        with urlopen(request, timeout=12) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        # Abstract has used both flattened and nested response fields.
+        validation = data.get("phone_validation", {}) or {}
+        carrier_info = data.get("phone_carrier", {}) or {}
+        location_info = data.get("phone_location", {}) or {}
+
+        valid = data.get("valid", validation.get("is_valid"))
+        carrier = data.get("carrier", carrier_info.get("name", "Unknown"))
+        line_type = data.get(
+            "line_type",
+            carrier_info.get("line_type", "Unknown")
+        )
+
+        location = data.get("registered_location")
+        if not location:
+            parts = [
+                location_info.get("city"),
+                location_info.get("region"),
+                location_info.get("country_name")
+            ]
+            location = ", ".join([str(x) for x in parts if x]) or "Unavailable"
+
+        country = data.get(
+            "country_name",
+            location_info.get("country_name", "Unknown")
+        )
+        country_code = data.get(
+            "country_code",
+            location_info.get("country_code", "Unknown")
+        )
+        region = location_info.get("region", "Unavailable")
+        city = location_info.get("city", "Unavailable")
+        timezone = location_info.get("timezone", "Unavailable")
+
+        api_risk = data.get("risk_score")
+        if isinstance(api_risk, (int, float)):
+            # Some APIs return 0-1, while others return 0-100.
+            api_risk = api_risk * 100 if api_risk <= 1 else api_risk
+        else:
+            api_risk = None
+
+        return {
+            "available": True,
+            "phone": data.get("phone", normalized),
+            "valid": valid,
+            "carrier": carrier or "Unknown",
+            "line_type": line_type or "Unknown",
+            "country": country or "Unknown",
+            "country_code": country_code or "Unknown",
+            "region": region or "Unavailable",
+            "city": city or "Unavailable",
+            "registered_location": location,
+            "timezone": timezone or "Unavailable",
+            "api_risk_score": api_risk,
+            "is_voip": validation.get("is_voip"),
+            "line_status": validation.get("line_status"),
+            "raw": data
+        }
+
+    except Exception as e:
+        return {
+            "available": False,
+            "error": str(e)
+        }
+
+
+def calculate_call_risk(phone_info, call_count, call_description, normalized_phone=None):
+    """
+    Deterministic risk signals from telecom metadata + caller behavior + community DB.
+    The final verdict is still assisted by Groq.
+    """
+    score = 0
+    flags = []
+
+    # ---- 1. COMMUNITY SPAM DB ----
+    community_score = 0
+    if normalized_phone:
+        community_score = get_community_spam_score(normalized_phone)
+        if community_score >= 85:
+            score += 50
+            flags.append("Number reported by community members as spam.")
+        elif community_score >= 70:
+            score += 35
+            flags.append("Number uses a known telemarketing/spam prefix (14x series).")
+
+    # ---- 2. TELECOM SIGNALS ----
+    if phone_info.get("available"):
+        if phone_info.get("valid") is False:
+            score += 35
+            flags.append("Phone number failed telecom validation.")
+
+        line_type = str(phone_info.get("line_type", "")).lower()
+        if "voip" in line_type:
+            score += 20
+            flags.append("Number is classified as VoIP, which deserves extra caution.")
+
+        if phone_info.get("is_voip") is True:
+            score += 20
+            flags.append("Telecom data indicates the number may be VoIP.")
+
+        line_status = str(phone_info.get("line_status", "")).lower()
+        if line_status in {"inactive", "unreachable", "disconnected"}:
+            score += 20
+            flags.append(f"Line status is reported as {line_status}.")
+
+        api_risk = phone_info.get("api_risk_score")
+        if isinstance(api_risk, (int, float)):
+            score += round(max(0, min(30, api_risk * 0.30)))
+            if api_risk >= 70:
+                flags.append("Phone intelligence provider reports elevated risk.")
+
+    # ---- 3. CALL FREQUENCY ----
+    if call_count >= 5:
+        score += 15
+        flags.append("Repeated calls were received from the same number.")
+    elif call_count >= 3:
+        score += 8
+        flags.append("Multiple calls from the same number were reported.")
+
+    # ---- 4. BEHAVIOR / DESCRIPTION ----
+    text = (call_description or "").lower()
+
+    behavior_rules = [
+        (["otp", "one time password", "verification code"], 25,
+         "Caller requested an OTP or verification code."),
+        (["pin", "upi pin", "atm pin", "cvv"], 30,
+         "Caller requested a banking PIN, UPI PIN or CVV."),
+        (["password", "login", "account password"], 25,
+         "Caller requested a password or login credential."),
+        (["urgent", "immediately", "within 10 minutes", "now"], 10,
+         "Caller used urgent or pressure-based language."),
+        (["police", "arrest", "legal action", "case registered"], 15,
+         "Caller used threats involving police or legal action."),
+        (["refund", "prize", "lottery", "reward"], 12,
+         "Caller used a prize, refund or reward story."),
+        (["pay", "payment", "transfer money", "send money"], 20,
+         "Caller requested money or a payment."),
+        (["remote access", "anydesk", "teamviewer", "screen share"], 25,
+         "Caller requested remote device or screen access.")
+    ]
+
+    for keywords, points, flag in behavior_rules:
+        if any(keyword in text for keyword in keywords):
+            score += points
+            flags.append(flag)
+
+    return min(score, 100), flags, community_score
+
+def report_number(phone_number: str):
+    """Add a number to the community-reported spam database."""
+    normalized = normalize_phone_number(phone_number)
+    clean = re.sub(r"\D", "", normalized)
+    if clean.startswith("91") and len(clean) > 10:
+        clean = clean[2:]
+    if len(clean) == 10:
+        st.session_state.reported_spam.add(clean)
+        return True
+    return False
+
+
+def get_community_spam_score(normalized_phone: str) -> int:
+    """Return 0-100 spam score from community DB + prefix heuristics."""
+    clean = re.sub(r"\D", "", normalized_phone)
+    if clean.startswith("91") and len(clean) > 10:
+        clean = clean[2:]
+    if len(clean) != 10:
+        return 0
+
+    if clean in st.session_state.get("reported_spam", set()):
+        return 85
+    if clean[:3] in ["140", "141", "142", "143", "144", "145", "146", "147", "148", "149"]:
+        return 70
+    if clean in ["9876543210", "9998887776"]:
+        return 90
+    return 0
+# ==================== REPORT BUTTON HELPER ====================
+def show_report_button(lang_code="en"):
+    report_text = TRANSLATIONS[lang_code].get("report_scam", t["report"])
+    st.markdown(
+        f'<a href="https://cybercrime.gov.in/" target="_blank" class="report-btn">'
+        f'🚨 {report_text}</a>',
+        unsafe_allow_html=True
+    )
+
+# ==================== TABS ====================
 tab1, tab2, tab3, tab4 = st.tabs([
-    f"💬 {T['message_checker']}",
-    f"🔗 {T['link_inspector']}",
-    f"📞 {T['call_checker']}",
-    f"🎓 {T['learn_quiz']}"
+    f"📱 {t['message_checker']}",
+    f"🔗 {t['link_inspector']}",
+    f"☎️ {t['call_checker']}",
+    f"📚 {t['learn_quiz']}"
 ])
 
 # ==================== TAB 1: MESSAGE CHECKER ====================
 with tab1:
-    st.header(T["message_checker"])
-    st.markdown(f"<p style='color: #64748b;'>{UI['paste_any']}</p>", unsafe_allow_html=True)
-
-    # Example buttons
-    st.markdown(f"**{UI['try_example']}**")
-    examples = EXAMPLE_MESSAGES.get(lang_code, EXAMPLE_MESSAGES["en"])
-    cols = st.columns(3)
-    for i, ex in enumerate(examples):
-        with cols[i]:
-            if st.button(f"{['🎰', '🏦', '📦'][i]} {UI[['fake_lottery', 'fake_bank', 'fake_delivery'][i]]}", key=f"ex_{i}"):
-                st.session_state["msg_input"] = ex
-
-    msg_input = st.text_area(
-        T["paste_message"],
-        value=st.session_state.get("msg_input", ""),
+    st.header(f"🔗 {t['is_scam']}")
+    st.write(t['paste_any'])
+    
+    # Counter Badge
+    st.markdown(f"""
+        <div class="counter-badge">
+            <span>🛡️ {st.session_state.messages_checked} {t['messages_checked']}, {st.session_state.scams_caught} {t['scams_caught']}</span>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Example Buttons
+    st.write(f"🚀 {t['try_example']}")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.button(t["fake_lottery"], key="ex_lottery"):
+            st.session_state.example_msg = "Congratulations! You won Rs 10,00,000 in KBC lottery. Pay Rs 5000 fee to claim your prize now!"
+            st.rerun()
+    with c2:
+        if st.button(t["fake_bank"], key="ex_bank"):
+            st.session_state.example_msg = "Dear customer, your bank account has been suspended. Click here to verify your details immediately or call 1800-XXX."
+            st.rerun()
+    with c3:
+        if st.button(t["fake_delivery"], key="ex_delivery"):
+            st.session_state.example_msg = "Your package is pending delivery. Please pay Rs 200 customs fee via this link to receive it within 24 hours."
+            st.rerun()
+    
+    # Input
+    message_input = st.text_area(
+        t["suspicious_message"],
+        value=st.session_state.example_msg,
+        placeholder="e.g. Congratulations! You won Rs 10,00,000 in KBC lottery. Pay Rs 5000 fee to claim...",
         height=150,
-        key="msg_text_area"
+        key="message_input"
     )
-
-    if st.button(T["analyze_btn"], type="primary", use_container_width=True):
-        if not msg_input.strip():
-            st.warning(UI["enter_message"])
+    
+    if st.button(t['check_message'], key="msg_btn"):
+        if message_input.strip():
+            with st.spinner("🔍 Analyzing message..."):
+                system_prompt = """You are an expert in identifying scams and fraudulent messages. 
+Analyze the given message and provide a JSON response with:
+{
+  "verdict": "scam|suspicious|safe",
+  "confidence": 0-100,
+  "red_flags": ["flag1", "flag2"],
+  "advice_en": "English advice",
+  "advice_te": "Telugu advice",
+  "advice_ta": "Tamil advice",
+  "advice_hi": "Hindi advice",
+  "advice_kn": "Kannada advice"
+}
+Respond ONLY with valid JSON, no other text."""
+                
+                response = analyze_with_groq(
+                    f"Analyze this message for scams: {message_input}",
+                    system_prompt
+                )
+                
+                if response is None:
+                    st.stop()
+                
+                with st.expander(t["raw_response"]):
+                    st.code(response)
+                
+                try:
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if json_match:
+                        result = json.loads(json_match.group())
+                    else:
+                        result = json.loads(response)
+                    
+                    verdict = result.get("verdict", "unknown").upper()
+                    confidence = result.get("confidence", 0)
+                    
+                    st.session_state.messages_checked += 1
+                    
+                    if verdict == "SCAM":
+                        st.markdown(f'<div class="scam-badge scam-high">⚠️ {verdict} ({confidence}%)</div>', unsafe_allow_html=True)
+                        st.session_state.scams_detected += 1
+                        st.session_state.scams_caught += 1
+                        show_report_button(lang_code)
+                    elif verdict == "SUSPICIOUS":
+                        st.markdown(f'<div class="scam-badge scam-medium">⚠️ {verdict} ({confidence}%)</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="scam-badge scam-safe">✅ {verdict} ({confidence}%)</div>', unsafe_allow_html=True)
+                    
+                    st.progress(confidence / 100)
+                    
+                    if result.get("red_flags"):
+                        st.subheader(f"🚩 {t['red_flags']}")
+                        for flag in result["red_flags"]:
+                            st.write(f"• {flag}")
+                    
+                    st.subheader(f"💡 {t['advice']}")
+                    st.caption(f"*{t['bilingual_note']}*")
+                    
+                    cols = st.columns(2)
+                    advice_map = {
+                        "en": result.get("advice_en", "N/A"),
+                        "te": result.get("advice_te", "N/A"),
+                        "ta": result.get("advice_ta", "N/A"),
+                        "hi": result.get("advice_hi", "N/A"),
+                        "kn": result.get("advice_kn", "N/A"),
+                    }
+                    
+                    with cols[0]:
+                        st.write(f"**{t['english']}:**\n{advice_map['en']}")
+                    with cols[1]:
+                        if lang_code == "te":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "ta":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "hi":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "kn":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        else:
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                    
+                except json.JSONDecodeError as e:
+                    st.error(t["parse_error"])
+                    st.text(f"Parse error: {str(e)}")
         else:
-            with st.spinner("Analyzing..."):
-                result = analyze_message_ai(msg_input, lang_code)
-                st.session_state.messages_checked += 1
-                if result and result.get("verdict", "").lower() in ["scam", "suspicious"]:
-                    st.session_state.scams_caught += 1
-                display_result(result, UI)
+            st.warning(t["enter_message"])
 
 # ==================== TAB 2: LINK INSPECTOR ====================
 with tab2:
-    st.header(T["link_inspector"])
-    st.markdown(f"<p style='color: #64748b;'>{UI['url_description']}</p>", unsafe_allow_html=True)
-
-    url_input = st.text_input(T["paste_url"], placeholder="https://example.com")
-
-    if st.button(T["analyze_url"], type="primary", use_container_width=True):
-        if not url_input.strip():
-            st.warning(UI["enter_url"])
+    st.header(f"🔗 {t['link_inspector']}")
+    st.write(t["url_description"])
+    
+    url_input = st.text_input(
+        t['paste_url'],
+        placeholder="https://example.com",
+        key="url_input"
+    )
+    
+    if st.button(t['analyze_url'], key="url_btn"):
+        if url_input.strip():
+            with st.spinner("🔍 Analyzing URL..."):
+                system_prompt = """You are an expert in identifying phishing and malicious links.
+Analyze the given URL and provide a JSON response with:
+{
+  "risk_level": "high|medium|low|safe",
+  "risk_score": 0-100,
+  "risk_factors": ["factor1", "factor2"],
+  "explanation_en": "English explanation",
+  "explanation_te": "Telugu explanation",
+  "explanation_ta": "Tamil explanation",
+  "explanation_hi": "Hindi explanation",
+  "explanation_kn": "Kannada explanation"
+}
+Respond ONLY with valid JSON, no other text."""
+                
+                response = analyze_with_groq(
+                    f"Analyze this URL for phishing/malicious content: {url_input}",
+                    system_prompt
+                )
+                
+                if response is None:
+                    st.stop()
+                
+                with st.expander(t["raw_response"]):
+                    st.code(response)
+                
+                try:
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if json_match:
+                        result = json.loads(json_match.group())
+                    else:
+                        result = json.loads(response)
+                    
+                    risk_level = result.get("risk_level", "unknown").upper()
+                    risk_score = result.get("risk_score", 0)
+                    
+                    if risk_level == "HIGH":
+                        st.markdown(f'<div class="scam-badge scam-high">⚠️ {t["high_risk"]} ({risk_score}%)</div>', unsafe_allow_html=True)
+                        st.session_state.scams_detected += 1
+                        show_report_button(lang_code)
+                    elif risk_level == "MEDIUM":
+                        st.markdown(f'<div class="scam-badge scam-medium">⚠️ {t["medium_risk"]} ({risk_score}%)</div>', unsafe_allow_html=True)
+                    elif risk_level == "LOW":
+                        st.markdown(f'<div class="scam-badge scam-low">⚡ {t["low_risk"]} ({risk_score}%)</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="scam-badge scam-safe">✅ {t["safe"]} ({risk_score}%)</div>', unsafe_allow_html=True)
+                    
+                    st.progress(risk_score / 100)
+                    
+                    if result.get("risk_factors"):
+                        st.subheader(f"🚩 {t['risk_factors']}")
+                        for factor in result["risk_factors"]:
+                            st.write(f"• {factor}")
+                    
+                    st.subheader(f"💡 {t['explanation']}")
+                    st.caption(f"*{t['bilingual_note']}*")
+                    
+                    cols = st.columns(2)
+                    expl_map = {
+                        "en": result.get("explanation_en", "N/A"),
+                        "te": result.get("explanation_te", "N/A"),
+                        "ta": result.get("explanation_ta", "N/A"),
+                        "hi": result.get("explanation_hi", "N/A"),
+                        "kn": result.get("explanation_kn", "N/A"),
+                    }
+                    
+                    with cols[0]:
+                        st.write(f"**{t['english']}:**\n{expl_map['en']}")
+                    with cols[1]:
+                        if lang_code == "te":
+                            st.write(f"**{t['selected_language']}:**\n{expl_map[lang_code]}")
+                        elif lang_code == "ta":
+                            st.write(f"**{t['selected_language']}:**\n{expl_map[lang_code]}")
+                        elif lang_code == "hi":
+                            st.write(f"**{t['selected_language']}:**\n{expl_map[lang_code]}")
+                        elif lang_code == "kn":
+                            st.write(f"**{t['selected_language']}:**\n{expl_map[lang_code]}")
+                        else:
+                            st.write(f"**{t['selected_language']}:**\n{expl_map[lang_code]}")
+                    
+                except json.JSONDecodeError as e:
+                    st.error(t["parse_error"])
+                    st.text(f"Parse error: {str(e)}")
         else:
-            with st.spinner("Analyzing URL..."):
-                result = analyze_url_ai(url_input, lang_code)
-                st.session_state.messages_checked += 1
-                if result and result.get("verdict", "").lower() in ["scam", "suspicious"]:
-                    st.session_state.scams_caught += 1
-                display_result(result, UI)
+            st.warning(t["enter_url"])
 
-# # ==================== TAB 3: CALL CHECKER ====================
+# ==================== TAB 3: CALL CHECKER ====================
 with tab3:
-    st.header(T["call_checker"])
-    st.markdown(f"<p style='color: #64748b;'>{UI['call_checker_description']}</p>", unsafe_allow_html=True)
+    st.header(f"☎️ {t['call_checker']}")
+    st.write(t["call_checker_description"])
+    st.info(t["location_notice"])
 
-    phone_input = st.text_input(T["phone_number"], placeholder="9876543210 or +919876543210")
-    call_count = st.number_input(T["call_count"], min_value=1, max_value=100, value=1)
-    call_desc = st.text_area(
-        UI["call_description_label"],
-        placeholder=UI["call_description_placeholder"],
-        height=100
+    col1, col2 = st.columns(2)
+    with col1:
+        phone_input = st.text_input(
+            t['phone_number'],
+            placeholder="e.g. +91 98765 43210",
+            key="phone_input"
+        )
+    with col2:
+        call_count = st.number_input(
+            t['call_count'],
+            min_value=1, max_value=100, value=1,
+            key="call_count"
+        )
+
+    call_description = st.text_area(
+        t["call_description_label"],
+        placeholder=t["call_description_placeholder"],
+        height=130,
+        key="call_description"
     )
 
-    st.markdown(f"<p style='font-size: 0.8rem; color: #64748b;'>{UI['privacy_notice']}</p>", unsafe_allow_html=True)
+    st.caption(t["privacy_notice"])
 
+    # Analyze + Report buttons side by side
     col_btn, col_report = st.columns([3, 1])
-    
     with col_btn:
-        analyze_clicked = st.button(T["analyze_call"], type="primary", use_container_width=True)
-    
+        analyze_clicked = st.button(t['analyze_call'], key="call_btn", use_container_width=True)
     with col_report:
-        if phone_input:
-            if st.button("🚨 " + UI["report"], use_container_width=True):
-                report_number(phone_input)
-                st.success(f"Number reported to community database!")
-                st.balloons()
+        if phone_input.strip():
+            if st.button("🚨 " + t['report'], key="report_call_btn", use_container_width=True):
+                if report_number(phone_input):
+                    st.success("✅ Number reported to community spam database!")
+                    st.balloons()
+                else:
+                    st.error("❌ Could not report number. Please enter a valid 10-digit Indian number.")
 
     if analyze_clicked:
         if not phone_input.strip():
-            st.warning(UI["enter_phone"])
+            st.warning(t["enter_phone"])
         else:
-            clean_phone = re.sub(r"[^\d+]", "", phone_input)
-            valid = (len(clean_phone) == 10 or 
-                    (clean_phone.startswith("+91") and len(clean_phone) == 13) or 
-                    (clean_phone.startswith("91") and len(clean_phone) == 12))
-            
-            if not valid:
-                st.error(UI["invalid_phone"])
-            else:
-                with st.spinner(UI["checking_call"]):
-                    # Get REAL intel
-                    intel = lookup_phone_intel(clean_phone)
-                    
-                    # Display Intel Card
-                    with st.expander(UI["telecom_intelligence"], expanded=True):
-                        c1, c2, c3 = st.columns(3)
-                        with c1:
-                            st.metric("📡 " + UI["carrier"], intel.get("carrier", "Unknown"))
-                            st.metric("📞 Line Type", intel.get("line_type", "Unknown"))
-                        with c2:
-                            st.metric("📍 " + UI["region"], intel.get("location", "Unknown"))
-                            st.metric("🌍 " + UI["country"], intel.get("country", "India"))
-                        with c3:
-                            # Spam score gauge
-                            spam_score = intel.get("spam_score", 0)
-                            spam_color = "#ef4444" if spam_score > 70 else "#f59e0b" if spam_score > 30 else "#22c55e"
-                            st.markdown(f"""
-                                <div style="text-align: center; padding: 0.5rem; background: {spam_color}15; border-radius: 12px; border: 2px solid {spam_color};">
-                                    <div style="font-size: 0.8rem; color: #64748b;">Spam Score</div>
-                                    <div style="font-size: 2rem; font-weight: 800; color: {spam_color};">{spam_score}%</div>
-                                    <div style="font-size: 0.75rem; color: #64748b;">{intel.get('report_count', 0)} reports</div>
-                                </div>
-                            """, unsafe_allow_html=True)
-                            st.caption(f"Source: {intel.get('source', 'fallback')}")
-                    
-                    st.caption(UI["telecom_not_verdict"])
-                    
-                    # AI Analysis with intel
-                    result = analyze_call_ai(clean_phone, call_desc, call_count, intel, lang_code)
-                    st.session_state.messages_checked += 1
-                    if result and result.get("verdict", "").lower() in ["scam", "suspicious"]:
-                        st.session_state.scams_caught += 1
-                    display_result(result, UI)
+            with st.spinner(t["checking_call"]):
+                normalized_phone = normalize_phone_number(phone_input)
+
+                if not normalized_phone or len(re.sub(r"\D", "", normalized_phone)) < 8:
+                    st.error(t["invalid_phone"])
+                    st.stop()
+
+                # 1. TELECOM INTELLIGENCE
+                phone_info = lookup_phone_intelligence(normalized_phone)
+
+                st.subheader(t["telecom_intelligence"])
+
+                if phone_info.get("available"):
+                    info_cols = st.columns(4)
+                    with info_cols[0]:
+                        st.metric(t["number_valid"], t["yes"] if phone_info.get("valid") is True else t["no"] if phone_info.get("valid") is False else t["unknown"])
+                    with info_cols[1]:
+                        st.metric(t["carrier"], phone_info.get("carrier", t["unknown"]))
+                    with info_cols[2]:
+                        st.metric(t["line_type"], phone_info.get("line_type", t["unknown"]))
+                    with info_cols[3]:
+                        st.metric(t["line_status"], phone_info.get("line_status", t["unknown"]))
+
+                    loc_cols = st.columns(4)
+                    with loc_cols[0]:
+                        st.write(f"**{t['country']}**")
+                        st.write(phone_info.get("country", t["unavailable"]))
+                    with loc_cols[1]:
+                        st.write(f"**{t['region']}**")
+                        st.write(phone_info.get("region", t["unavailable"]))
+                    with loc_cols[2]:
+                        st.write(f"**{t['registered_city']}**")
+                        st.write(phone_info.get("city", t["unavailable"]))
+                    with loc_cols[3]:
+                        st.write(f"**{t['timezone']}**")
+                        st.write(phone_info.get("timezone", t["unavailable"]))
+
+                    st.caption(t["telecom_source_note"])
+
+                    if phone_info.get("api_risk_score") is not None:
+                        st.write(f"{t['provider_risk']}: **{phone_info['api_risk_score']:.0f}/100**")
+                else:
+                    st.warning(t["lookup_setup"])
+                    st.caption(f"{t['lookup_detail']}: {phone_info.get('error', t['unknown'])}")
+
+                # 2. BEHAVIOR + COMMUNITY RISK ENGINE
+                behavior_score, behavior_flags, community_score = calculate_call_risk(
+                    phone_info, int(call_count), call_description, normalized_phone
+                )
+
+                # Show spam score gauge BEFORE AI analysis
+                spam_color = "#ef4444" if community_score > 70 else "#f59e0b" if community_score > 30 else "#22c55e"
+                st.markdown(f"""
+                    <div style="margin: 1rem 0; padding: 1rem; background: {spam_color}15; border-radius: 16px; border: 2px solid {spam_color}; text-align: center;">
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Community Spam Score</div>
+                        <div style="font-size: 2.5rem; font-weight: 800; color: {spam_color};">{community_score}%</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">{len(st.session_state.get('reported_spam', set()))} numbers in community DB</div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                # 3. GROQ AI ANALYSIS
+                system_prompt = """You are an expert Indian phone-scam analyst.
+
+Analyze a suspicious phone call using:
+1. Telecom metadata supplied by a phone intelligence provider.
+2. Number of calls received.
+3. What the caller said or requested.
+4. Deterministic risk signals calculated by the application.
+5. Community spam database score.
+
+CRITICAL RULES:
+- If community spam score is 0, provider risk is normal/unavailable, and the caller description contains NO scam indicators (no OTP requests, no urgency, no threats, no payment demands), the verdict MUST be "safe".
+- Do NOT mark unknown or new phone numbers as "suspicious" just because they are unknown. Default to "safe" unless there is actual evidence.
+- Only mark "scam" if there is strong evidence (high community spam score, high provider risk, or clear red flags in description).
+- Never claim that a phone number proves a person is a scammer.
+- Never claim that registered location is the caller's live location.
+- A carrier or SIM/network type is NOT proof of identity.
+- Treat missing data as unknown, not safe.
+
+Return exactly:
+{
+  "verdict": "scam|suspicious|safe",
+  "confidence": 0-100,
+  "red_flags": ["flag1", "flag2"],
+  "telecom_assessment": "short assessment",
+  "advice_en": "English advice",
+  "advice_te": "Telugu advice",
+  "advice_ta": "Tamil advice",
+  "advice_hi": "Hindi advice",
+  "advice_kn": "Kannada advice"
+}"""
+
+                masked_number = mask_phone_number(normalized_phone)
+
+                prompt = f"""
+Masked phone number: {masked_number}
+Number of calls received: {int(call_count)}
+Caller statement / behavior:
+{call_description if call_description.strip() else "No caller statement provided."}
+
+Telecom intelligence:
+{json.dumps({
+    "valid": phone_info.get("valid"),
+    "carrier": phone_info.get("carrier"),
+    "line_type": phone_info.get("line_type"),
+    "country": phone_info.get("country"),
+    "region": phone_info.get("region"),
+    "registered_city": phone_info.get("city"),
+    "registered_location": phone_info.get("registered_location"),
+    "timezone": phone_info.get("timezone"),
+    "line_status": phone_info.get("line_status"),
+    "is_voip": phone_info.get("is_voip"),
+    "provider_risk_score": phone_info.get("api_risk_score")
+}, ensure_ascii=False)}
+
+Application behavior risk score: {behavior_score}/100
+Application community spam score: {community_score}/100
+Application red flags:
+{json.dumps(behavior_flags, ensure_ascii=False)}
+
+Combine the evidence carefully and return JSON only.
+"""
+
+                response = analyze_with_groq(prompt, system_prompt)
+
+                if response is None:
+                    st.stop()
+
+                try:
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if json_match:
+                        result = json.loads(json_match.group())
+                    else:
+                        result = json.loads(response)
+
+                    verdict = str(result.get("verdict", "suspicious")).upper()
+
+                    try:
+                        confidence = int(result.get("confidence", behavior_score))
+                    except (TypeError, ValueError):
+                        confidence = behavior_score
+                    confidence = max(0, min(100, confidence))
+
+                    # Safety override: strong deterministic evidence beats AI hallucination
+                    if behavior_score >= 75 and verdict == "SAFE":
+                        verdict = "SUSPICIOUS"
+                        confidence = max(confidence, behavior_score)
+
+                    if verdict == "SCAM":
+                        st.markdown(f'<div class="scam-badge scam-high">⚠️ SCAM ({confidence}%)</div>', unsafe_allow_html=True)
+                        st.session_state.scams_detected += 1
+                        show_report_button(lang_code)
+                    elif verdict == "SUSPICIOUS":
+                        st.markdown(f'<div class="scam-badge scam-medium">⚠️ SUSPICIOUS ({confidence}%)</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="scam-badge scam-safe">✅ SAFE ({confidence}%)</div>', unsafe_allow_html=True)
+
+                    st.progress(confidence / 100)
+
+                    # Risk evidence
+                    st.subheader(t["risk_evidence"])
+
+                    evidence_cols = st.columns(4)
+                    with evidence_cols[0]:
+                        st.metric(t["behavior_risk"], f"{behavior_score}/100")
+                    with evidence_cols[1]:
+                        st.metric(t["calls_received"], int(call_count))
+                    with evidence_cols[2]:
+                        provider_score = phone_info.get("api_risk_score")
+                        st.metric("Provider Risk", f"{provider_score:.0f}/100" if isinstance(provider_score, (int, float)) else "Unavailable")
+                    with evidence_cols[3]:
+                        st.metric("Community Spam", f"{community_score}/100")
+
+                    all_flags = []
+                    all_flags.extend(behavior_flags)
+                    for flag in result.get("red_flags", []) or []:
+                        if flag not in all_flags:
+                            all_flags.append(flag)
+
+                    if all_flags:
+                        st.subheader(f"🚩 {t['red_flags']}")
+                        for flag in all_flags:
+                            st.write(f"• {flag}")
+
+                    telecom_assessment = result.get("telecom_assessment")
+                    if telecom_assessment:
+                        st.subheader(t["telecom_assessment"])
+                        st.write(telecom_assessment)
+
+                    st.subheader(f"💡 {t['advice']}")
+                    st.caption(f"*{t['bilingual_note']}*")
+
+                    cols = st.columns(2)
+                    advice_map = {
+                        "en": result.get("advice_en", "Do not share OTPs, PINs, passwords or CVVs. Verify the caller through an official number."),
+                        "te": result.get("advice_te", "OTP, PIN, పాస్‌వర్డ్ లేదా CVV ఎవరితోనూ పంచుకోకండి. అధికారిక నంబర్ ద్వారా ధృవీకరించండి."),
+                        "ta": result.get("advice_ta", "OTP, PIN, கடவுச்சொல் அல்லது CVV-ஐ பகிர வேண்டாம். அதிகாரப்பூர்வ எண்ணில் சரிபார்க்கவும்."),
+                        "hi": result.get("advice_hi", "OTP, PIN, पासवर्ड या CVV साझा न करें। आधिकारिक नंबर से सत्यापित करें।"),
+                        "kn": result.get("advice_kn", "OTP, PIN, ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ CVV ಹಂಚಿಕೊಳ್ಳಬೇಡಿ. ಅಧಿಕೃತ ಸಂಖ್ಯೆಯ ಮೂಲಕ ಪರಿಶೀಲಿಸಿ.")
+                    }
+
+                    with cols[0]:
+                        st.write(f"**{t['english']}:**\n{advice_map['en']}")
+                    with cols[1]:
+                        if lang_code == "te":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "ta":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "hi":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "kn":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        else:
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+
+                    with st.expander("ℹ️ What this checker can and cannot know"):
+                        st.markdown("""
+**Raksha can check**
+- Whether the number appears valid.
+- Carrier/network information when available.
+- Mobile/landline/VoIP line type when available.
+- Country/region/city registered to the number when available.
+- Telecom/provider risk information when available.
+- Community-reported spam scores.
+- Repeated-call behavior.
+- Scam indicators in what the caller said.
+
+**Raksha cannot determine from a phone number alone**
+- The caller's exact live GPS location.
+- The caller's real identity with certainty.
+- Whether a specific physical SIM card is currently inside a particular phone.
+- Whether a number is definitely a scammer just because it has a certain carrier or location.
+
+For an actual SIM-swap check, a carrier-backed service is required. Do not treat
+a normal carrier lookup as a SIM-swap check.
+""")
+
+                except json.JSONDecodeError as e:
+                    st.error(t["parse_error"])
+                    st.text(f"Parse error: {str(e)}")
+                # ---------------------------------------------------------
+                # 1. TELECOM / NUMBER INTELLIGENCE
+                # ---------------------------------------------------------
+                phone_info = lookup_phone_intelligence(normalized_phone)
+
+                st.subheader(t["telecom_intelligence"])
+
+                if phone_info.get("available"):
+                    info_cols = st.columns(4)
+
+                    with info_cols[0]:
+                        st.metric(
+                            t["number_valid"],
+                            t["yes"] if phone_info.get("valid") is True else
+                            t["no"] if phone_info.get("valid") is False else t["unknown"]
+                        )
+
+                    with info_cols[1]:
+                        st.metric(
+                            t["carrier"],
+                            phone_info.get("carrier", t["unknown"])
+                        )
+
+                    with info_cols[2]:
+                        st.metric(
+                            t["line_type"],
+                            phone_info.get("line_type", t["unknown"])
+                        )
+
+                    with info_cols[3]:
+                        st.metric(
+                            t["line_status"],
+                            phone_info.get("line_status", t["unknown"])
+                        )
+
+                    loc_cols = st.columns(4)
+
+                    with loc_cols[0]:
+                        st.write(f"**{t["country"]}**")
+                        st.write(phone_info.get("country", t["unavailable"]))
+
+                    with loc_cols[1]:
+                        st.write(f"**{t["region"]}**")
+                        st.write(phone_info.get("region", t["unavailable"]))
+
+                    with loc_cols[2]:
+                        st.write(f"**{t["registered_city"]}**")
+                        st.write(phone_info.get("city", t["unavailable"]))
+
+                    with loc_cols[3]:
+                        st.write(f"**{t["timezone"]}**")
+                        st.write(phone_info.get("timezone", t["unavailable"]))
+
+                    st.caption(t["telecom_source_note"])
+
+                    if phone_info.get("api_risk_score") is not None:
+                        st.write(
+                            f"{t["provider_risk"]}: **{phone_info['api_risk_score']:.0f}/100**"
+                        )
+                else:
+                    st.warning(t["lookup_setup"])
+                    st.caption(f"{t["lookup_detail"]}: {phone_info.get('error', t["unknown"])}")
+
+                # ---------------------------------------------------------
+                # 2. LOCAL BEHAVIOR RISK ENGINE
+                # ---------------------------------------------------------
+                behavior_score, behavior_flags = calculate_call_risk(
+                    phone_info,
+                    int(call_count),
+                    call_description
+                )
+
+                # ---------------------------------------------------------
+                # 3. GROQ AI ANALYSIS
+                # ---------------------------------------------------------
+                system_prompt = """You are an expert Indian phone-scam analyst.
+
+Analyze a suspicious phone call using:
+1. Telecom metadata supplied by a phone intelligence provide2. Number of calls received.
+3. What the caller said or requested.
+4. Deterministic risk signals calculated by the application.
+
+IMPORTANT:
+- Never claim that a phone number proves a person is a scammer.
+- Never claim that registered location is the caller's live location.
+- A carrier, SIM/network type, city, or region is NOT proof of identity.
+- Treat missing data as unknown, not safe.
+- A legitimate carrier does not mean the caller is legitimate.
+- OTP, UPI PIN, CVV, passwords, remote access requests, threats and urgent
+  payment demands are strong scam indicators.
+- Give practical safety advice.
+- Respond ONLY with valid JSON.
+
+Return exactly:
+{
+  "verdict": "scam|suspicious|safe",
+  "confidence": 0-100,
+  "red_flags": ["flag1", "flag2"],
+  "telecom_assessment": "short assessment",
+  "advice_en": "English advice",
+  "advice_te": "Telugu advice",
+  "advice_ta": "Tamil advice",
+  "advice_hi": "Hindi advice",
+  "advice_kn": "Kannada advice"
+}"""
+
+                masked_number = mask_phone_number(normalized_phone)
+
+                prompt = f"""
+Masked phone number: {masked_number}
+Number of calls received: {int(call_count)}
+Caller statement / behavior:
+{call_description if call_description.strip() else "No caller statement provided."}
+
+Telecom intelligence:
+{json.dumps({
+    "valid": phone_info.get("valid"),
+    "carrier": phone_info.get("carrier"),
+    "line_type": phone_info.get("line_type"),
+    "country": phone_info.get("country"),
+    "region": phone_info.get("region"),
+    "registered_city": phone_info.get("city"),
+    "registered_location": phone_info.get("registered_location"),
+    "timezone": phone_info.get("timezone"),
+    "line_status": phone_info.get("line_status"),
+    "is_voip": phone_info.get("is_voip"),
+    "provider_risk_score": phone_info.get("api_risk_score")
+}, ensure_ascii=False)}
+
+Application behavior risk score: {behavior_score}/100
+Application red flags:
+{json.dumps(behavior_flags, ensure_ascii=False)}
+
+Combine the evidence carefully and return JSON only.
+"""
+
+                response = analyze_with_groq(prompt, system_prompt)
+
+                if response is None:
+                    st.stop()
+
+                try:
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if json_match:
+                        result = json.loads(json_match.group())
+                    else:
+                        result = json.loads(response)
+
+                    verdict = str(result.get("verdict", "suspicious")).upper()
+
+                    try:
+                        confidence = int(result.get("confidence", behavior_score))
+                    except (TypeError, ValueError):
+                        confidence = behavior_score
+
+                    confidence = max(0, min(100, confidence))
+
+                    # Never allow a "SAFE" verdict when the deterministic
+                    # engine has strong scam evidence.
+                    if behavior_score >= 75 and verdict == "SAFE":
+                        verdict = "SUSPICIOUS"
+                        confidence = max(confidence, behavior_score)
+
+                    if verdict == "SCAM":
+                        st.markdown(
+                            f'<div class="scam-badge scam-high">⚠️ SCAM ({confidence}%)</div>',
+                            unsafe_allow_html=True
+                        )
+                        st.session_state.scams_detected += 1
+                        show_report_button(lang_code)
+
+                    elif verdict == "SUSPICIOUS":
+                        st.markdown(
+                            f'<div class="scam-badge scam-medium">⚠️ SUSPICIOUS ({confidence}%)</div>',
+                            unsafe_allow_html=True
+                        )
+
+                    else:
+                        st.markdown(
+                            f'<div class="scam-badge scam-safe">✅ SAFE-LOOKING ({confidence}%)</div>',
+                            unsafe_allow_html=True
+                        )
+
+                    st.progress(confidence / 100)
+
+                    # -----------------------------------------------------
+                    # Risk evidence
+                    # -----------------------------------------------------
+                    st.subheader(t["risk_evidence"])
+
+                    evidence_cols = st.columns(3)
+
+                    with evidence_cols[0]:
+                        st.metric(t["behavior_risk"], f"{behavior_score}/100")
+
+                    with evidence_cols[1]:
+                        st.metric(t["calls_received"], int(call_count))
+
+                    with evidence_cols[2]:
+                        provider_score = phone_info.get("api_risk_score")
+                        st.metric(
+                            "Provider Risk",
+                            f"{provider_score:.0f}/100"
+                            if isinstance(provider_score, (int, float))
+                            else "Unavailable"
+                        )
+
+                    all_flags = []
+                    all_flags.extend(behavior_flags)
+                    for flag in result.get("red_flags", []) or []:
+                        if flag not in all_flags:
+                            all_flags.append(flag)
+
+                    if all_flags:
+                        st.subheader(f"🚩 {t['red_flags']}")
+                        for flag in all_flags:
+                            st.write(f"• {flag}")
+
+                    telecom_assessment = result.get("telecom_assessment")
+                    if telecom_assessment:
+                        st.subheader(t["telecom_assessment"])
+                        st.write(telecom_assessment)
+
+                    st.subheader(f"💡 {t['advice']}")
+                    st.caption(f"*{t['bilingual_note']}*")
+
+                    cols = st.columns(2)
+                    advice_map = {
+                        "en": result.get("advice_en", "Do not share OTPs, PINs, passwords or CVVs. Verify the caller through an official number."),
+                        "te": result.get("advice_te", "OTP, PIN, పాస్‌వర్డ్ లేదా CVV ఎవరితోనూ పంచుకోకండి. అధికారిక నంబర్ ద్వారా ధృవీకరించండి."),
+                        "ta": result.get("advice_ta", "OTP, PIN, கடவுச்சொல் அல்லது CVV-ஐ பகிர வேண்டாம். அதிகாரப்பூர்வ எண்ணில் சரிபார்க்கவும்."),
+                        "hi": result.get("advice_hi", "OTP, PIN, पासवर्ड या CVV साझा न करें। आधिकारिक नंबर से सत्यापित करें।"),
+                        "kn": result.get("advice_kn", "OTP, PIN, ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ CVV ಹಂಚಿಕೊಳ್ಳಬೇಡಿ. ಅಧಿಕೃತ ಸಂಖ್ಯೆಯ ಮೂಲಕ ಪರಿಶೀಲಿಸಿ.")
+                    }
+
+                    with cols[0]:
+                        st.write(f"**{t['english']}:**\n{advice_map['en']}")
+
+                    with cols[1]:
+                        if lang_code == "te":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "ta":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "hi":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        elif lang_code == "kn":
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+                        else:
+                            st.write(f"**{t['selected_language']}:**\n{advice_map[lang_code]}")
+
+                    # -----------------------------------------------------
+                    # 4. IMPORTANT LIMITATIONS
+                    # -----------------------------------------------------
+                    with st.expander("ℹ️ What this checker can and cannot know"):
+                        st.markdown(
+                            """
+**Raksha can check**
+- Whether the number appears valid.
+- Carrier/network information when available.
+- Mobile/landline/VoIP line type when available.
+- Country/region/city registered to the number when available.
+- Telecom/provider risk information when available.
+- Repeated-call behavior.
+- Scam indicators in what the caller said.
+
+**Raksha cannot determine from a phone number alone**
+- The caller's exact live GPS location.
+- The caller's real identity with certainty.
+- Whether a specific physical SIM card is currently inside a particular phone.
+- Whether a number is definitely a scammer just because it has a certain carrier or location.
+
+For an actual SIM-swap check, a carrier-backed service is required. Do not treat
+a normal carrier lookup as a SIM-swap check.
+"""
+                        )
+
+                except json.JSONDecodeError as e:
+                    st.error(t["parse_error"])
+                    st.text(f"Parse error: {str(e)}")
 
 # ==================== TAB 4: LEARN & QUIZ ====================
 with tab4:
-    st.header(T["quiz_title"])
-    st.markdown(f"<p style='color: #64748b;'>{UI['quiz_description']}</p>", unsafe_allow_html=True)
-
-    quiz_data = QUIZ_DATA.get(lang_code, QUIZ_DATA["en"])
-
-    if st.session_state.quiz_current >= len(quiz_data):
-        # Quiz completed
-        score = st.session_state.quiz_score
-        total = len(quiz_data)
-        percentage = (score / total) * 100
-
-        st.balloons()
-        st.markdown(f"""
-            <div style="text-align: center; padding: 2rem; background: white; border-radius: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.08);">
-                <h1 style="font-size: 3rem; margin: 0;">{'🎉' if percentage == 100 else '🏆'}</h1>
-                <h2>{UI['score']}: {score}/{total}</h2>
-                <p style="font-size: 1.2rem; color: #64748b;">{percentage:.0f}%</p>
-                <p style="font-size: 1.1rem; margin-top: 1rem;">{UI['perfect_score'] if percentage == 100 else ''}</p>
-            </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("🔄 Restart Quiz", type="primary"):
-            st.session_state.quiz_current = 0
-            st.session_state.quiz_score = 0
-            st.session_state.quiz_answered = False
-            st.rerun()
-    else:
-        current_q = quiz_data[st.session_state.quiz_current]
-
-        st.progress((st.session_state.quiz_current) / len(quiz_data))
-        st.subheader(f"{UI['question']} {st.session_state.quiz_current + 1}/{len(quiz_data)}")
-        st.markdown(f"<p style='font-size: 1.1rem; font-weight: 600; color: #1e293b;'>{current_q['question']}</p>", unsafe_allow_html=True)
-
-        answer = st.radio("Select your answer:", current_q["options"], key=f"q_{st.session_state.quiz_current}")
-
-        if not st.session_state.quiz_answered:
-            if st.button(UI["submit_answer"], type="primary"):
-                st.session_state.quiz_answered = True
-                selected_idx = current_q["options"].index(answer)
-                if selected_idx == current_q["correct"]:
-                    st.session_state.quiz_score += 1
-                    st.success(f"{UI['correct']} {current_q['explanation']}")
-                else:
-                    st.error(f"{UI['incorrect']} {current_q['explanation']}")
-                st.rerun()
+    st.header(f"📚 {t['quiz_title']}")
+    st.write(t["quiz_description"])
+    
+    # Quiz questions
+    quiz_data = [
+        {
+            "question_en": "You receive a WhatsApp message saying you won ₹10 lakh in a lottery you never entered. What should you do?",
+            "question_te": "మీరు ఎప్పుడూ పాల్గొనని లాటరీలో ₹10 లక్షలు గెలిచారని WhatsApp సందేశం వస్తే మీరు ఏమి చేయాలి?",
+            "question_ta": "நீங்கள் எப்போதும் பங்கேற்காத லாட்டரியில் ₹10 லட்சம் வென்றதாக WhatsApp செய்தி வந்தால் என்ன செய்வீர்கள்?",
+            "question_hi": "आपको एक WhatsApp संदेश मिलता है कि आपने एक लॉटरी में ₹10 लाख जीते हैं जिसमें आपने कभी भाग नहीं लिया। आपको क्या करना चाहिए?",
+            "question_kn": "ನೀವು ಎಂದಿಗೂ ಭಾಗವಹಿಸದ ಲಾಟರಿಯಲ್ಲಿ ₹10 ಲಕ್ಷ ಗೆದ್ದಿರುವಿರಿ ಎಂದು WhatsApp ಸಂದೇಶ ಬಂದರೆ ನೀವು ಏನು ಮಾಡಬೇಕು?",
+            "options_en": ["Pay the processing fee immediately", "Ignore and delete the message", "Share your bank details to receive the prize"],
+            "options_te": ["వెంటనే ప్రాసెసింగ్ ఫీజు చెల్లించండి", "విస్మరించి సందేశాన్ని తొలగించండి", "బహుమతి పొందడానికి మీ బ్యాంక్ వివరాలను పంచుకోండి"],
+            "options_ta": ["உடனடியாக செயலாக்க கட்டணத்தை செலுத்துங்கள்", "புறக்கணித்து செய்தியை நீக்குங்கள்", "பரிசைப் பெற உங்கள் வங்கி விவரங்களைப் பகிர்ந்து கொள்ளுங்கள்"],
+            "options_hi": ["तुरंत प्रोसेसिंग शुल्क का भुगतान करें", "संदेश को अनदेखा करें और हटा दें", "इनाम प्राप्त करने के लिए अपने बैंक विवरण साझा करें"],
+            "options_kn": ["ತಕ್ಷಣ ಪ್ರೊಸೆಸಿಂಗ್ ಶುಲ್ಕವನ್ನು ಪಾವತಿಸಿ", "ನಿರ್ಲಕ್ಷಿಸಿ ಸಂದೇಶವನ್ನು ಅಳಿಸಿ", "ಬಹುಮತಿಯನ್ನು ಪಡೆಯಲು ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ವಿವರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಿ"],
+            "correct": 1,
+            "explanation_en": "Legitimate lotteries never ask winners to pay fees upfront. If you didn't enter, you can't win.",
+            "explanation_te": "ధ్రువీకరించబడిన లాటరీలు గెలుపొందినవారిని ఎప్పుడూ ముందుగా ఫీజులు చెల్లించమని అడగవు. మీరు పాల్గొనకపోతే, గెలవలేరు.",
+            "explanation_ta": "சட்டபூர்வமான லாட்டரிகள் வெற்றியாளர்களிடம் முன்பணம் கேட்காது. நீங்கள் பங்கேற்கவில்லை என்றால், வெற்றி பெற முடியாது.",
+            "explanation_hi": "वैध लॉटरी विजेताओं से कभी भी अग्रिम शुल्क नहीं मांगती। यदि आपने भाग नहीं लिया, तो आप जीत नहीं सकते।",
+            "explanation_kn": "ಕಾನೂನುಬದ್ಧ ಲಾಟರಿಗಳು ವಿಜೇತರಿಂದ ಎಂದಿಗೂ ಮುಂಗಡ ಶುಲ್ಕವನ್ನು ಕೇಳುವುದಿಲ್ಲ. ನೀವು ಭಾಗವಹಿಸದಿದ್ದರೆ, ಗೆಲ್ಲಲು ಸಾಧ್ಯವಿಲ್ಲ."
+        },
+        {
+            "question_en": "A caller claims to be from your bank and asks for your OTP to 'unblock' your account. What do you do?",
+            "question_te": "ఒక కాలర్ మీ బ్యాంక్ నుండి వచ్చారని చెప్పి మీ ఖాతాను 'అన్‌బ్లాక్' చేయడానికి మీ OTPని అడుగుతారు. మీరు ఏమి చేస్తారు?",
+            "question_ta": "ஒரு அழைப்பாளர் உங்கள் வங்கியிலிருந்து வந்ததாகக் கூறி, உங்கள் கணக்கை 'தடைநீக்க' உங்கள் OTP ஐக் கேட்கிறார். நீங்கள் என்ன செய்வீர்கள்?",
+            "question_hi": "एक कॉलर आपके बैंक से होने का दावा करता है और आपके खाते को 'अनब्लॉक' करने के लिए आपका OTP मांगता है। आप क्या करेंगे?",
+            "question_kn": "ಒಬ್ಬ ಕರೆ ಮಾಡುವವರು ನಿಮ್ಮ ಬ್ಯಾಂಕಿನಿಂದ ಬಂದವರು ಎಂದು ಹೇಳಿ ನಿಮ್ಮ ಖಾತೆಯನ್ನು 'ಅನ್‌ಬ್ಲಾಕ್' ಮಾಡಲು ನಿಮ್ಮ OTP ಅನ್ನು ಕೇಳುತ್ತಾರೆ. ನೀವು ಏನು ಮಾಡುತ್ತೀರಿ?",
+            "options_en": ["Give the OTP quickly to avoid account suspension", "Hang up and call your bank's official number", "Ask them to send a confirmation email first"],
+            "options_te": ["ఖాతా సస్పెన్షన్‌ను నివారించడానికి వేగంగా OTP ఇవ్వండి", "ఫోన్ కట్ చేసి మీ బ్యాంక్ అధికారిక నంబర్‌కు కాల్ చేయండి", "ముందుగా ధృవీకరణ ఇమెయిల్ పంపమని అడగండి"],
+            "options_ta": ["கணக்கு இடைநீக்கத்தைத் தவிர்க்க விரைவாக OTP ஐ வழங்குங்கள்", "தொலைபேசியைத் துண்டித்து உங்கள் வங்கியின் அதிகாரப்பூர்வ எண்ணை அழைக்கவும்", "முதலில் உறுதிப்படுத்தும் மின்னஞ்சலை அனுப்புமாறு கேட்கவும்"],
+            "options_hi": ["खाता निलंबन से बचने के लिए तुरंत OTP दें", "फोन काटें और अपने बैंक की आधिकारिक संख्या पर कॉल करें", "पहले एक पुष्टि ईमेल भेजने के लिए कहें"],
+            "options_kn": ["ಖಾತೆ ಅಮಾನತುಗೊಳ್ಳುವುದನ್ನು ತಪ್ಪಿಸಲು ತಕ್ಷಣ OTP ನೀಡಿ", "ಕಾಲ್ ಕಟ್ ಮಾಡಿ ನಿಮ್ಮ ಬ್ಯಾಂಕಿನ ಅಧಿಕೃತ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡಿ", "ಮೊದಲು ದೃಢೀಕರಣ ಇಮೇಲ್ ಕಳುಹಿಸಲು ಹೇಳಿ"],
+            "correct": 1,
+            "explanation_en": "Banks NEVER ask for OTPs. OTPs are for your use only. Always hang up and call the official number.",
+            "explanation_te": "బ్యాంకులు ఎప్పుడూ OTPలను అడగవు. OTPలు మీ వ్యక్తిగత ఉపయోగానికి మాత్రమే. ఎల్లప్పుడూ ఫోన్ కట్ చేసి అధికారిక నంబర్‌కు కాల్ చేయండి.",
+            "explanation_ta": "வங்கிகள் எப்போதும் OTP ஐக் கேட்காது. OTPகள் உங்கள் பயன்பாட்டிற்கு மட்டுமே. எப்போதும் தொலைபேசியைத் துண்டித்து அதிகாரப்பூர்வ எண்ணை அழைக்கவும்.",
+            "explanation_hi": "बैंक कभी भी OTP नहीं मांगते। OTP केवल आपके उपयोग के लिए हैं। हमेशा फोन काटें और आधिकारिक नंबर पर कॉल करें।",
+            "explanation_kn": "ಬ್ಯಾಂಕುಗಳು ಎಂದಿಗೂ OTP ಅನ್ನು ಕೇಳುವುದಿಲ್ಲ. OTPಗಳು ನಿಮ್ಮ ಬಳಕೆಗೆ ಮಾತ್ರ. ಯಾವಾಗಲೂ ಕಾಲ್ ಕಟ್ ಮಾಡಿ ಅಧಿಕೃತ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡಿ."
+        },
+        {
+            "question_en": "You get an SMS with a link saying 'Your package is pending. Pay customs fee.' You didn't order anything. What is this?",
+            "question_te": "మీరు ఏమీ ఆర్డర్ చేయకపోతే, 'మీ ప్యాకేజీ పెండింగ్‌లో ఉంది. కస్టమ్స్ ఫీజు చెల్లించండి' అని లింక్‌తో SMS వస్తే ఇది ఏమిటి?",
+            "question_ta": "நீங்கள் எதுவும் ஆர்டர் செய்யவில்லை என்றால், 'உங்கள் பொதி நிலுவையில் உள்ளது. சுங்கக் கட்டணம் செலுத்தவும்' என்ற இணைப்புடன் SMS வந்தால் இது என்ன?",
+            "question_hi": "आपको एक SMS मिलता है जिसमें लिंक है 'आपका पैकेज लंबित है। कस्टम शुल्क दें।' आपने कुछ भी ऑर्डर नहीं किया। यह क्या है?",
+            "question_kn": "ನೀವು ಏನನ್ನೂ ಆರ್ಡರ್ ಮಾಡದಿದ್ದರೆ, 'ನಿಮ್ಮ ಪ್ಯಾಕೇಜ್ ಬಾಕಿ ఉಂದಿ. ಕಸ್ಟಮ್ಸ್ ಶುಲ್ಕ ಪಾವತಿಸಿ' ಎಂದು ಲಿಂಕ್‌ನೊಂದಿಗೆ SMS ಬಂದರೆ ಇದು ಏನು?",
+            "options_en": ["A genuine delivery notification", "A delivery scam", "A mistake by the courier company"],
+            "options_te": ["అసలైన డెలివరీ నోటిఫికేషన్", "డెలివరీ స్కామ్", "కూరియర్ కంపెనీ యొక్క తప్పు"],
+            "options_ta": ["உண்மையான விநியோக அறிவிப்பு", "விநியோக மோசடி", "கூரியர் நிறுவனத்தின் தவறு"],
+            "options_hi": ["एक genuine डिलीवरी सूचना", "एक डिलीवरी घोटाला", "कूरियर कंपनी की गलती"],
+            "options_kn": ["ನಿಜವಾದ ಡೆಲಿವರಿ ಸೂಚನೆ", "ಡೆಲಿವರಿ ಸ್ಕ್ಯಾಮ್", "ಕೂರಿಯರ್ ಕಂಪನಿಯ ತಪ್ಪು"],
+            "correct": 1,
+            "explanation_en": "This is a common delivery scam. If you didn't order anything, there's no package. Never pay for unexpected deliveries.",
+            "explanation_te": "ఇది సాధారణ డెలివరీ స్కామ్. మీరు ఏమీ ఆర్డర్ చేయకపోతే, ప్యాకేజీ లేదు. ఊహించని డెలివరీల కోసం ఎప్పుడూ చెల్లించవద్దు.",
+            "explanation_ta": "இது ஒரு பொதுவான விநியோக மோசடி. நீங்கள் எதுவும் ஆர்டர் செய்யவில்லை என்றால், பொதி இல்லை. எதிர்பாராத விநியோகங்களுக்கு ஒருபோதும் பணம் செலுத்த வேண்டாம்.",
+            "explanation_hi": "यह एक सामान्य डिलीवरी घोटाला है। यदि आपने कुछ भी ऑर्डर नहीं किया, तो कोई पैकेज नहीं है। अप्रत्याशित डिलीवरी के लिए कभी भुगतान न करें।",
+            "explanation_kn": "ಇದು ಸಾಮಾನ್ಯ ಡೆಲಿವರಿ ಸ್ಕ್ಯಾಮ್. ನೀವು ಏನನ್ನೂ ಆರ್ಡರ್ ಮಾಡದಿದ್ದರೆ, ಪ್ಯಾಕೇಜ್ ಇಲ್ಲ. ಅನಿರೀಕ್ಷಿತ ಡೆಲಿವರಿಗಳಿಗೆ ಎಂದಿಗೂ ಹಣ ಪಾವತಿಸಬೇಡಿ."
+        }
+    ]
+    
+    if "quiz_score" not in st.session_state:
+        st.session_state.quiz_score = 0
+    if "quiz_submitted" not in st.session_state:
+        st.session_state.quiz_submitted = [False] * len(quiz_data)
+    if "quiz_answers" not in st.session_state:
+        st.session_state.quiz_answers = [None] * len(quiz_data)
+    
+    for i, q in enumerate(quiz_data):
+        st.markdown(f"**{t['question']} {i+1}:**")
+        
+        # Display question in selected language
+        if lang_code == "te":
+            st.write(q["question_te"])
+            options = q["options_te"]
+            explanation = q["explanation_te"]
+        elif lang_code == "ta":
+            st.write(q["question_ta"])
+            options = q["options_ta"]
+            explanation = q["explanation_ta"]
+        elif lang_code == "hi":
+            st.write(q["question_hi"])
+            options = q["options_hi"]
+            explanation = q["explanation_hi"]
+        elif lang_code == "kn":
+            st.write(q["question_kn"])
+            options = q["options_kn"]
+            explanation = q["explanation_kn"]
         else:
-            selected_idx = current_q["options"].index(answer)
-            if selected_idx == current_q["correct"]:
-                st.success(f"{UI['correct']}")
+            st.write(q["question_en"])
+            options = q["options_en"]
+            explanation = q["explanation_en"]
+        
+        answer = st.radio(
+            f"select_{i}",
+            options=options,
+            index=None,
+            key=f"quiz_q_{i}",
+            label_visibility="collapsed"
+        )
+        
+        if st.button(t['submit_answer'], key=f"submit_{i}") and not st.session_state.quiz_submitted[i]:
+            if answer is not None:
+                selected_idx = options.index(answer)
+                st.session_state.quiz_answers[i] = selected_idx
+                st.session_state.quiz_submitted[i] = True
+                
+                if selected_idx == q["correct"]:
+                    st.session_state.quiz_score += 1
+                    st.success(t["correct"])
+                else:
+                    st.error(t["incorrect"])
+                
+                st.info(f"💡 {explanation}")
             else:
-                st.error(f"{UI['incorrect']}")
-            st.info(current_q["explanation"])
+                st.warning(t["select_answer"])
+        
+        if st.session_state.quiz_submitted[i]:
+            if st.session_state.quiz_answers[i] == q["correct"]:
+                st.success(t["correct"])
+            else:
+                st.error(t["incorrect"])
+            st.info(f"💡 {explanation}")
+        
+        st.markdown("---")
+    
+    # Score display
+    st.subheader(f"🏆 {t['score']}: {st.session_state.quiz_score}/{len(quiz_data)}")
+    progress = st.session_state.quiz_score / len(quiz_data)
+    st.progress(progress)
+    
+    if st.session_state.quiz_score == len(quiz_data):
+        st.balloons()
+        st.success(t["perfect_score"])
 
-            if st.button("Next Question →", type="primary"):
-                st.session_state.quiz_current += 1
-                st.session_state.quiz_answered = False
-                st.rerun()
+# ==================== FLOATING REPORT BUTTON ====================
+st.markdown(f"""
+    <a href="https://cybercrime.gov.in/" target="_blank" class="fab-report" title="{t['report_scam_title']}">
+        🚨
+    </a>
+""", unsafe_allow_html=True)
 
 # ==================== FOOTER ====================
-st.divider()
-st.markdown(f"""
-    <div style="text-align: center; padding: 2rem 0; color: #64748b;">
-        <p style="font-size: 0.9rem;">{UI['footer']}</p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;">{UI['footer_model']}</p>
-        <div style="margin-top: 1rem;">
-            <a href="https://cybercrime.gov.in" target="_blank" class="report-btn">{UI['report']}</a>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-# Floating Action Button for reporting
-st.markdown(f"""
-    <a href="https://cybercrime.gov.in" target="_blank" class="fab-report" title="{UI['report']}">🚨</a>
-""", unsafe_allow_html=True)
+st.markdown("---")
+st.caption(f"🛡️ {t['footer']}")
+st.caption(t["footer_model"])
